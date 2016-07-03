@@ -6,6 +6,10 @@
     single orientation:
     flips: 2
     flops: 1
+    
+    n orientations:
+    flips = 2*n for each n
+    flops = flip - 1 for corresponding flop
 
 flip flop pair begins directly after strobe drops to 0
 
@@ -24,8 +28,6 @@ class SRPdecoder:
         self.voltageThreshold = 2.5
         self.stimLength = 500
         self.baseline = 25
-
-
 
     #Gives back chunks of the input signalChannel corresponding to flip and flop stim lists
     def GetStimLists(self, signalChannel, numStims, avgLength, stimTimeStamps):
@@ -53,19 +55,9 @@ class SRPdecoder:
             avgs.append(avg)
             
         return avgs
-            
-                
+                         
     #Detects the number of stims in a session
     def StimsPerSession(self, stimLengths, avgLength):
-#        upper = avgLength*1.5
-#        
-#        ends = [filter(lambda x: x > upper, stim) for stim in stimLengths.values()]
-#        for i in range(len(ends)):
-#            if len(ends[i])>0:
-#                ends[i] = ends[i][0]
-#                ends[i] = stimLengths[i+1].index(ends[i])
-#        end = min(ends)
-#        print "stims per session: " + str(end + 1)
     
         total = len(stimLengths[1])
         starts = filter(lambda x: x < 0.5*avgLength, stimLengths[1])
@@ -129,10 +121,7 @@ if __name__ == "__main__":
     SRP = SRPdecoder()
     timeCodes = SRP.GetCodeList(signalChannel, codeChannels)
     stimTimeStamps = {code:SRP.GetTimeStamps(code, timeCodes) for code in stimCodes}
-#    flopTimeStamps = SRP.GetTimeStamps(1, timeCodes)
-#    flipTimeStamps = SRP.GetTimeStamps(2, timeCodes)
     stimLengths = {code:SRP.GetStimLengths(stimTimeStamps[code]) for code in stimTimeStamps}
-#    flipLengths, flopLengths = SRP.GetStimLengths(flipTimeStamps, flopTimeStamps)
     
     avgLength = SRP.AvgStimLength(stimTimeStamps)
     stimsPerSession = SRP.StimsPerSession(stimLengths, avgLength)
@@ -140,19 +129,9 @@ if __name__ == "__main__":
     stims = SRP.GetStimLists(signalChannel, stimsPerSession, avgLength, stimTimeStamps)
     avgs = [SRP.GetAverages(stims[code], stimsPerSession) for code in stims]
     
-    #avg1 = SRP.GetAverages(stims[1], stimsPerSession)
-#    flipavgs = SRP.GetAverages(flips, stimsPerSession)
-#    flopavgs = SRP.GetAverages(flops, stimsPerSession)
-    
     plt.figure(4)
     plt.plot(avgs[0][0])
     plt.figure(5)
     plt.plot(avgs[1][0])
-    
-#    for i in range(len(avgs)):
-#        plt.figure(i+1)
-#        for j in avgs[i]:
-#            plt.plot(j)
-#    
     
         

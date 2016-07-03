@@ -9,6 +9,7 @@ import SRPdecoder2 as SRP
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+import pickle
 
 class DataHandler:
     def __init__(self):
@@ -86,22 +87,6 @@ class DataHandler:
             if int(key) % 2 != 0:
                 orient_avgs[key] = d.CombineAvgs(stim_avgs, key, key + 1)
         
-#        total_avgs = dict()
-#        for key in stim_avgs:
-#            avgs = np.zeros(len(stim_avgs[key][0]))
-#            for i in range(len(stim_avgs[key])):
-#                avgs += stim_avgs[key][i]
-#            avgs /= len(stim_avgs[key])
-#            total_avgs[key] = [avgs]
-#        
-#        grand_avgs = dict()
-#        for key in stim_avgs:
-#            avgs = np.zeros(len(orient_avgs[key][0]))
-#            for i in range(len(orient_avgs[key])):
-#                avgs += orient_avgs[key][i]
-#            avgs /= len(orient_avgs[key])
-#            grand_avgs[key] = [avgs]
-        
         self.stimTimeStamps[filename] = stimTimeStamps
         self.timeCodes[filename] = timeCodes
         self.stimLengths[filename] = stimLengths
@@ -134,6 +119,8 @@ class DataHandler:
         self.orient_amplitudes.clear()
         self.total_avgs.clear()
         self.total_amplitudes.clear()
+        self.grand_avgs.clear()
+        self.grand_amps.clear()
     
     #len(dh.stim_avgs['M_SRP11_45d_135d_d6_awake_132_data.bin'][1][0]) = 500
     #dict(filenames) dict(keycodes) list(stim averages)
@@ -157,8 +144,7 @@ class DataHandler:
                         "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
                         "max_x":max_x + min_x + lower, "max_y":max_y, "waveform":array}
                         
-                    
-        
+                        
     #graphs all channels in binary data file
     def graph_raw(self, filename):
         f = cp.ChannelPlot()
@@ -185,9 +171,7 @@ class DataHandler:
                 num_channels += 1
         return num_channels
             
-        
-        
-#    def load(self, dat):
+
        
 if __name__ == "__main__":
     
@@ -201,13 +185,6 @@ if __name__ == "__main__":
     
     print dh.detect_channels(fn)
     
-
-        
-#    plt.figure()
-#    plt.plot(dh.stim_avgs[filename][1][0])
-    
-
-#    
     dh.graph_all()
     
         

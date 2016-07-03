@@ -22,7 +22,6 @@ class DictionarySaver():
         self.file_opt['initialfile'] = fn
         save_loc = tkFileDialog.asksaveasfilename(**self.file_opt)
         
-        print save_loc
           
         sio.savemat(save_loc, dictionary)
 

@@ -5,19 +5,15 @@ Created on Tue May 24 17:45:55 2016
 @author: Jesse
 """
 
-#This is a git test
-#testing
 import Tkinter as tk
 import ttk
 import tkFileDialog
-import ChannelPlot as cp
-import os
 
 import DictionarySaver as ds
 import DataHandler as dh
 
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("TkAgg", warn=False)
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
@@ -25,21 +21,11 @@ import matplotlib.animation as animation
 from matplotlib import style
 
 
-
-
 #global figures
 LARGE_FONT = ("Verdana", 12)
 style.use("bmh")
 
-datafile = cp.ChannelPlot()
-datafile.setDataType('<d')
-        
-data = {}
-flipAverages = {}
-flopAverages = {}
-amplitudes = {}
-
-f = Figure(figsize = (6,3), dpi = 100)
+f = Figure(figsize = (10,5), dpi = 100)
 a = f.add_subplot(111)
 a.plot([0 for i in range(500)])
 
@@ -57,8 +43,6 @@ class Application(tk.Tk):
     
     def __init__(self, *args, **kwargs):
         
-#        decoder = SRP.SRPdecoder()
-        
         tk.Tk.__init__(self, *args, **kwargs)
         
         tk.Tk.iconbitmap(self, default = "mouse.ico")
@@ -72,8 +56,6 @@ class Application(tk.Tk):
         container.grid_columnconfigure(0, weight = 1)
         
         self.frames = {}
-        #self.data = {}
-        #self.data = dh.DataHandler()
         
         for F in (StartPage, PageOne, GraphPage):
             
@@ -89,27 +71,7 @@ class Application(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
     
-    #loads file into data using channelImport
-    def load_files(self):
-        datafile = cp.ChannelPlot()
-        
-        datafile.setDataType('<d')
-             
-        
-        files = tkFileDialog.askopenfilenames(title='Choose files')
-        filelist = list(files) 
-        for filename in filelist:
-                datafile.setFilename(filename)
-                datafile.openDataFile()
-                #self.data[filename] = datafile.data
-                fn = os.path.basename(filename)
-                print fn
-                data[filename] = datafile.data
-                
-    
-    #plots averages
-    
-    
+       
 #First page when you open the app
 class StartPage(tk.Frame):
     
@@ -142,9 +104,6 @@ class StartPage(tk.Frame):
         files = tkFileDialog.askopenfilenames(title='Choose files')
         filelist = list(files) 
         for filename in filelist:
-#                datafile.setFilename(filename)
-#                datafile.openDataFile()
-#                data[os.path.basename(filename)] = datafile.data
             Data.add_file(filename)
                 
         self.loadbox.delete(0, tk.END)
@@ -174,17 +133,35 @@ class GraphPage(tk.Frame):
     
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        f1 = tk.Frame(self)
+        
+        center_anchor = tk.Frame(self)
+        center_anchor.pack(anchor = 'center')
+        
+        #list boxes to the right
+        right_panel = tk.Frame(center_anchor)
+        right_panel.pack(side = tk.RIGHT)
+        
+        #graph and control panel to the left
+        left_panel = tk.Frame(center_anchor)
+        left_panel.pack(anchor = 'center')
+        
+        #container for control panel
+        f1 = tk.Frame(left_panel)
         f1.pack(side = tk.TOP)
         
-        f2 = tk.Frame(self)
+        #containers for list boxes
+        f2 = tk.Frame(right_panel)
         f2.pack(anchor = 'ne')
         
-        f3 = tk.Frame(self)
+        f3 = tk.Frame(right_panel)
         f3.pack(side = tk.RIGHT)
         
-        f4 = tk.Frame(self)
-        f4.pack(side = tk.BOTTOM)
+        #container for plot, toolbar
+        f4 = tk.Frame(left_panel)
+        f4.pack(anchor = 'center')
+        
+        f5 = tk.Frame(f4)
+        f5.pack(side = tk.BOTTOM)
         
         
         label = tk.Label(f1, text="Graph Page", font = LARGE_FONT)
@@ -224,32 +201,32 @@ class GraphPage(tk.Frame):
         button7.grid(row = 1, column = 6)
         
         stimlabel = tk.Label(f1, text="Stim Length")
-        stimlabel.grid(row = 2, column = 0)
+        stimlabel.grid(row = 2, column = 0, padx = 10, pady = 10)
         
         self.stimLengthEntry = ttk.Entry(f1, text = "Stim Length")
-        self.stimLengthEntry.grid(row = 2, column = 1)
+        self.stimLengthEntry.grid(row = 2, column = 1, padx = 10, pady = 10)
         self.stimLengthEntry.insert(0,500)
         
         baseLabel = tk.Label(f1, text = "Baseline Window")
-        baseLabel.grid(row = 2, column = 2)
+        baseLabel.grid(row = 2, column = 2, padx = 10, pady = 10)
         
         self.baselineEntry = ttk.Entry(f1, text = "Baseline Window")
-        self.baselineEntry.grid(row = 2, column = 3)
+        self.baselineEntry.grid(row = 2, column = 3, padx = 10, pady = 10)
         self.baselineEntry.insert(0, 25)
         
-        t2Label = tk.Label(f1, text = "Time 2")
-        t2Label.grid(row = 2, column = 4)
+
         
-        self.t2Entry = ttk.Entry(f1, text = "Time 2")
-        self.t2Entry.grid(row = 2, column = 5)
-        self.t2Entry.insert(0, 25)
+
+        #sliding scales for window selection
+        self.min_slider = tk.Scale(f1, from_=0, to=500, label = "min window", orient = tk.HORIZONTAL,
+                                   command = self.on_slider_move)
+        self.min_slider.grid(row = 2, column = 4, padx = 10, pady = 10)
+        self.min_slider.set(25)
         
-        t3Label = tk.Label(f1, text = "Time 3")
-        t3Label.grid(row = 2, column = 6)
-        
-        self.t3Entry = ttk.Entry(f1, text = "Time 3")
-        self.t3Entry.grid(row = 2, column = 7)
-        self.t3Entry.insert(0, 250)
+        self.max_slider = tk.Scale(f1, from_=0, to=500, label = "max window", orient = tk.HORIZONTAL,
+                                   command = self.on_slider_move)
+        self.max_slider.grid(row = 2, column = 5, padx = 10, pady = 10)
+        self.max_slider.set(250)
         
         minLabel = tk.Label(f1, text = "Min: ")
         minLabel.grid(row = 4, column = 0)
@@ -272,12 +249,9 @@ class GraphPage(tk.Frame):
         ampDisplay = tk.Label(f1, textvariable = self.ampVar)
         ampDisplay.grid(row = 4, column = 5)
         
-        self.graphBehavior = 'all'
-        self.linewidth = 0.5
         
-        #temp data
-        #listboxes
-#        self.stimLength = 500
+        self.graphBehavior = 'total'
+        self.linewidth = 0.5
         
         self.familiarVar = tk.IntVar()
         self.familiar = tk.Checkbutton(f1, variable = self.familiarVar, command = self.on_familiar_select, text = orientations[1][0])
@@ -299,21 +273,21 @@ class GraphPage(tk.Frame):
         
         
         self.processedList = tk.Listbox(f2,selectmode='extended', exportselection=0, width = 50, height = 10)
-        self.processedList.pack()
+        self.processedList.pack(side = tk.RIGHT, padx = 10, pady = 10)
         self.processedList.bind('<<ListboxSelect>>',self.on_file_select)        
         
-        self.selectedBlocks = tk.Listbox(f3,selectmode='extended', exportselection=0, width = 50, height = 50)
-        self.selectedBlocks.pack(side=tk.RIGHT)
+        self.selectedBlocks = tk.Listbox(f3,selectmode='extended', exportselection=0, width = 50, height = 40)
+        self.selectedBlocks.pack(side=tk.RIGHT, padx = 10, pady = 10)
         self.selectedBlocks.bind('<<ListboxSelect>>',self.graph_on_select)
         
         #show the figure
-        canvas = FigureCanvasTkAgg(f, self)
+        canvas = FigureCanvasTkAgg(f, f4)
         canvas.show()
-        canvas.get_tk_widget().pack(side = tk.BOTTOM, fill = tk.BOTH, expand = True)
+        canvas.get_tk_widget().pack(side = tk.TOP, padx = 10, pady = 10, fill = tk.BOTH)
         
-        toolbar = NavigationToolbar2TkAgg(canvas, f4)
+        toolbar = NavigationToolbar2TkAgg(canvas, f5)
         toolbar.update()
-        canvas._tkcanvas.pack(side = tk.BOTTOM, fill = tk.BOTH, expand = True)
+        canvas._tkcanvas.pack(side = tk.BOTTOM)
   
     def graph_all(self):
         a.clear()
@@ -352,6 +326,9 @@ class GraphPage(tk.Frame):
         
         #get selectiosn
         a.clear()
+        
+        self.graphBehavior = 'total'
+        
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
         if (len(selection) == 0):
@@ -407,34 +384,12 @@ class GraphPage(tk.Frame):
                         a.plot(Data.total_amplitudes[key][3][0]["max_x"],Data.total_amplitudes[key][3][0]["max_y"], 
                                marker = '+', color = 'limegreen', markersize = 10, markeredgewidth = 2)  
                 
-
-
-#        a.legend(loc='upper left', prop={'size':6}, bbox_to_anchor=(1,1))
-#        f.tight_layout(pad = 10)
         a.legend(fontsize = 6,loc='best')
                 
-        
-    def get_minmax(self, key, trial, array):
-        t2 = self.getT2Entry()
-        t3 = self.getT3Entry()
-        
-        min_x = array[t2:t3].argmin()
-        min_y = array[t2:t3][min_x]
-        max_x = array[min_x + t2:t3].argmax()
-        max_y = array[min_x + t2:t3][max_x]
-        a.plot(min_x + t2, min_y, marker = '+', color = 'red', markersize = 10, markeredgewidth = 2)
-        a.plot(max_x + min_x + t2, max_y, marker = '+', color = 'limegreen', markersize = 10, markeredgewidth = 2)
-        
-        self.minVar.set(str(min_x + t2) + " , " +str(min_y))
-        self.maxVar.set(str(max_x + min_x + t2) + " , " + str(max_y))
-        self.ampVar.set(str(max_y-min_y))
-        
-        amplitudes[key][trial] = {"units":["V","ms"], "amplitude":max_y-min_y,"min_x":min_x + t2, "min_y":min_y, "max_x":max_x + min_x + t2, "max_y":max_y, "waveform":array}
         
     #selects an graphs sessions associated with the slected file name     
     def on_file_select(self, evt):
         a.clear()
-        amplitudes.clear()
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
         self.selectedBlocks.selection_set(0,tk.END)
@@ -447,8 +402,8 @@ class GraphPage(tk.Frame):
                 self.selectedBlocks.selection_set(item)
             elif key not in selection:
                 self.selectedBlocks.selection_clear(item)
+        #self.graph_selected()
         self.graph_total()
-        #self.graph_selected
                     
 
     #function to graph selected items only
@@ -500,12 +455,12 @@ class GraphPage(tk.Frame):
             for ori in Data.orient_amplitudes[fn]:
                 d = Data.orient_amplitudes[fn][ori].copy()
                 #d.update(savedamps[fn]['ori'+str(ori)])
-                savedamps[fn]['ori' + str(ori)] = d
-                savedamps[fn]['ori' + str(ori)]['total'] = Data.grand_amps[fn][ori][0]
+                savedamps[fn][orientations[ori][0]] = d
+                savedamps[fn][orientations[ori][0]]['total'] = Data.grand_amps[fn][ori][0]
                 for trial in Data.orient_amplitudes[fn][ori]:
                     e = Data.orient_amplitudes[fn][ori][trial]
                     #e.update(savedamps[fn]['ori' + str(ori)][trial])
-                    savedamps[fn]['ori' + str(ori)]['trial' + str(trial)] = e
+                    savedamps[fn][orientations[ori][0]]['trial' + str(trial + 1)] = e
             truncated = fn[:-4]
             savedamps[truncated] = savedamps[fn]
             del savedamps[fn]
@@ -514,20 +469,25 @@ class GraphPage(tk.Frame):
         
         print savedamps
         save = ds.DictionarySaver()
-        save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
+        try:
+            save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
+        except IndexError:
+            print "error saving: missing data"
 
     def on_stim_select(self):
-        if self.graphBehavior == 'all':
-            self.graph_all()
-        elif self.graphBehavior == 'selected':
-            self.graph_selected()
+        self.re_graph()
         
     def on_familiar_select(self):
-        self.graph_total()
+        self.re_graph()
     
     def on_novel_select(self):
-        self.graph_total()
+        self.re_graph()
     
+    def get_amplitudes(self, amplitudes):
+        for a, b in amplitudes:
+            b.clear()
+            Data.get_amplitudes(a, b, self.getT2Entry(), self.getT3Entry())
+
     #brings names in controller into listbox
     def process(self):
         for filename in Data.fileData.keys():
@@ -537,10 +497,11 @@ class GraphPage(tk.Frame):
             
             #need to add channel # selection
             Data.process_file(filename, Data.detect_channels(filename), stimLength, baseline)
-            Data.get_amplitudes(Data.stim_avgs, Data.amplitudes, self.getT2Entry(), self.getT3Entry())
-            Data.get_amplitudes(Data.orient_avgs, Data.orient_amplitudes, self.getT2Entry(), self.getT3Entry())
-            Data.get_amplitudes(Data.total_avgs, Data.total_amplitudes, self.getT2Entry(), self.getT3Entry())
-            Data.get_amplitudes(Data.grand_avgs, Data.grand_amps, self.getT2Entry(), self.getT3Entry())
+#            Data.get_amplitudes(Data.stim_avgs, Data.amplitudes, self.getT2Entry(), self.getT3Entry())
+#            Data.get_amplitudes(Data.orient_avgs, Data.orient_amplitudes, self.getT2Entry(), self.getT3Entry())
+#            Data.get_amplitudes(Data.total_avgs, Data.total_amplitudes, self.getT2Entry(), self.getT3Entry())
+#            Data.get_amplitudes(Data.grand_avgs, Data.grand_amps, self.getT2Entry(), self.getT3Entry())
+            self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),(Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
             
             print "done"
     
@@ -555,9 +516,7 @@ class GraphPage(tk.Frame):
                     if orientations[c][1] == "flip":
                         self.selectedBlocks.insert(tk.END, orientations[c][0] + " " + str(i+1) + "  " + b)
         
-
-        #self.graph_all()
-        self.graph_total()
+        self.re_graph()
         
         
             
@@ -584,40 +543,45 @@ class GraphPage(tk.Frame):
         except ValueError:
             print "stim length must be an integer"
             return 500
+    
+    def on_slider_move(self, event):
+        self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),(Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
+        self.re_graph()
             
     def getT2Entry(self):
-        t2 = self.t2Entry.get()
-        if t2 == '':
-            return 25
-        if int(t2) == 0:
-            return 1
-        try:
-            t2 = int(t2)
-            return t2
-        except ValueError:
-            print "time window start must be an integer"
-            return 25
+        maxwin = self.max_slider.get()
+        minwin = self.min_slider.get()
+        if maxwin <= minwin:
+            minwin = 25
+            self.min_slider.set(25)
+            self.max_slider.set(250)
+        
+        return minwin
             
     def getT3Entry(self):
-        t3 = self.t3Entry.get()
-        if t3 == '':
-            return 25
-        if int(t3) == 0:
-            return 1
-        try:
-            t3 = int(t3)
-            return t3
-        except ValueError:
-            print "time window start must be an integer"
-            return 25
+        maxwin = self.max_slider.get()
+        minwin = self.min_slider.get()
+        if maxwin <= minwin:
+            maxwin = 250
+            self.min_slider.set(25)
+            self.max_slider.set(250)
+        
+        return maxwin
     
-    
+    def re_graph(self):
+        if self.graphBehavior == 'all':
+            self.graph_all()
+        elif self.graphBehavior == 'selected':
+            self.graph_selected()
+        elif self.graphBehavior == 'total':
+            self.graph_total()
+        
     def view_raws(self):
-        Data.graph_raw(Data.filenames.keys()[0])
+        try:
+            Data.graph_raw(Data.filenames.keys()[0])
+        except IndexError:
+            print "graphing error: missing data"
             
-        
-        
-        
         
 app = Application()
 ani = animation.FuncAnimation(f, animate, interval = 1000)
