@@ -48,6 +48,9 @@ class Application(tk.Tk):
         tk.Tk.iconbitmap(self, default = "mouse.ico")
         tk.Tk.wm_title(self, "SRP Analysis")
         
+        #set resolution scaling
+        #self.call('tk', 'scaling', 2.0)
+        
         container = tk.Frame(self)
         
         container.pack(side="top", fill="both", expand = True)
@@ -253,6 +256,7 @@ class GraphPage(tk.Frame):
         self.graphBehavior = 'total'
         self.linewidth = 0.5
         
+        #graph novel/familar tick boxes
         self.familiarVar = tk.IntVar()
         self.familiar = tk.Checkbutton(f1, variable = self.familiarVar, command = self.on_familiar_select, text = orientations[1][0])
         self.familiar.grid(row = 3, column = 0)
@@ -262,6 +266,7 @@ class GraphPage(tk.Frame):
         self.novel = tk.Checkbutton(f1, variable = self.novelVar, command = self.on_novel_select, text = orientations[3][0])
         self.novel.grid(row = 3, column = 1)
         
+        #flip/flop/average radio buttons
         self.stimTypeVar = tk.IntVar()
         self.stimTypeVar.set(3)
         self.R1 = tk.Radiobutton(f1, text = "Flips", variable = self.stimTypeVar, value = 1, command = self.on_stim_select)
@@ -271,7 +276,15 @@ class GraphPage(tk.Frame):
         self.R2.grid(row = 3, column = 3)
         self.R3.grid(row = 3, column = 4)
         
-        
+        #amplitude radio buttons
+        self.lock_selected = tk.IntVar()
+        self.lock_selected.set(1)
+        self.unlocked = tk.Radiobutton(f1, text = "set all amplitudes", variable = self.lock_selected, value = 1)
+        self.locked = tk.Radiobutton(f1, text = "set selected amps only", variable = self.lock_selected, value = 2)
+        self.unlocked.grid(row = 3, column = 5)
+        self.locked.grid(row = 3, column = 6)
+
+        #file and stim listboxes
         self.processedList = tk.Listbox(f2,selectmode='extended', exportselection=0, width = 50, height = 10)
         self.processedList.pack(side = tk.RIGHT, padx = 10, pady = 10)
         self.processedList.bind('<<ListboxSelect>>',self.on_file_select)        
@@ -404,7 +417,39 @@ class GraphPage(tk.Frame):
                 self.selectedBlocks.selection_clear(item)
         #self.graph_selected()
         self.graph_total()
-                    
+    
+    def set_amplitudes(self):
+        
+        selection = self.selectedBlocks.curselection()
+        
+        file_selection = self.processedList.curselection()
+        file_selection = [str(self.processedList.get(item)) for item in file_selection]
+        
+        lower = self.getT2Entry()
+        upper = self.getT3Entry()
+        
+        stimTypeVar = self.stimTypeVar.get()
+        if stimTypeVar == 1:
+            lookupIndex = 1
+        elif stimTypeVar ==2 or stimTypeVar == 3:
+            lookupIndex = 0
+        
+        for item in selection:
+            block, key = self.selectedBlocks.get(item).split("  ")
+            orientation, block = block.split(" ")
+            block = int(block) - 1
+            
+            if stimTypeVar != 3:
+                stim_type = orientation_lookup[orientation][lookupIndex]
+                Data.set_amplitude(Data.stim_avgs, Data.amplitudes, lower, upper, key, stim_type, block)
+            elif stimTypeVar == 3:
+                stim_type = orientation_lookup[orientation][lookupIndex]
+                Data.set_amplitude(Data.orient_avgs, Data.orient_amplitudes, lower, upper, key, stim_type, block)
+        
+        for key in file_selection:
+            Data.set_grand_amp(Data.total_avgs, Data.total_amplitudes, lower, upper, key)
+            Data.set_grand_amp(Data.grand_avgs, Data.grand_amps, lower, upper, key)            
+        
 
     #function to graph selected items only
     def graph_selected(self):
@@ -487,6 +532,7 @@ class GraphPage(tk.Frame):
         for a, b in amplitudes:
             b.clear()
             Data.get_amplitudes(a, b, self.getT2Entry(), self.getT3Entry())
+    
 
     #brings names in controller into listbox
     def process(self):
@@ -545,7 +591,10 @@ class GraphPage(tk.Frame):
             return 500
     
     def on_slider_move(self, event):
-        self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),(Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
+        if self.lock_selected.get() == 1:
+            self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),(Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
+        elif self.lock_selected.get() == 2:
+            self.set_amplitudes()
         self.re_graph()
             
     def getT2Entry(self):
