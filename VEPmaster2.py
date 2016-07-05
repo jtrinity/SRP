@@ -8,6 +8,7 @@ Created on Tue May 24 17:45:55 2016
 import Tkinter as tk
 import ttk
 import tkFileDialog
+import os
 
 import DictionarySaver as ds
 import DataHandler as dh
@@ -45,7 +46,9 @@ class Application(tk.Tk):
         
         tk.Tk.__init__(self, *args, **kwargs)
         
-        tk.Tk.iconbitmap(self, default = "mouse.ico")
+        oscheck = os.name
+        if str.find(oscheck,'posix') < 0:
+            tk.Tk.iconbitmap(self, default = "mouse.ico")
         tk.Tk.wm_title(self, "SRP Analysis")
         
         #set resolution scaling
