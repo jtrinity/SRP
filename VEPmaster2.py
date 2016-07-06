@@ -326,8 +326,7 @@ class GraphPage(tk.Frame):
         h = window1.winfo_screenheight()
         window1.geometry("+%d+%d" % ( w/2 - window1.winfo_width()/2, 0))
         window2.geometry("+%d+%d" % ( w - window2.winfo_width(), (h)/2 - window2.winfo_height()/2))
-        window3.update()
-        window3.geometry("+%d+%d" % ( (w)/2 - window3.winfo_width()/2, (h)/2 - window3.winfo_height()/2))
+        window3.geometry("+%d+%d" % ( (w)/2 - 500, (h)/2-200))
 
   
     def graph_all(self):
