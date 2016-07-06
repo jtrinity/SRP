@@ -97,9 +97,9 @@ class StartPage(tk.Frame):
                            command = lambda: self.load())
         button1.grid(row = 1, column = 0)
         
-        button2 = ttk.Button(f, text="SRP Analysis",
-                             command = lambda: controller.show_frame(GraphPage))
-        button2.grid(row = 1, column = 1)
+#        button2 = ttk.Button(f, text="SRP Analysis",
+#                             command = lambda: controller.show_frame(GraphPage))
+#        button2.grid(row = 1, column = 1)
         
         button3 = ttk.Button(f, text = "Clear All",
                              command = lambda:  self.clear())
@@ -240,37 +240,38 @@ class GraphPage(tk.Frame):
         #sliding scales for window selection
         self.min_slider = tk.Scale(f1, from_=0, to=500, label = "min window", orient = tk.HORIZONTAL,
                                    command = self.on_slider_move)
-        self.min_slider.grid(row = 2, column = 4, padx = 10, pady = 10)
+        self.min_slider.grid(row = 3, column = 2, padx = 10, pady = 10)
         self.min_slider.set(25)
         
         self.max_slider = tk.Scale(f1, from_=0, to=500, label = "max window", orient = tk.HORIZONTAL,
                                    command = self.on_slider_move)
-        self.max_slider.grid(row = 2, column = 5, padx = 10, pady = 10)
+        self.max_slider.grid(row = 3, column = 3, padx = 10, pady = 10)
         self.max_slider.set(250)
         
-        minLabel = tk.Label(f1, text = "Min: ")
-        minLabel.grid(row = 4, column = 0)
-        
-        self.minVar = tk.StringVar()
-        minDisplay = tk.Label(f1, textvariable = self.minVar)
-        minDisplay.grid(row = 4, column = 1)
-        
-        maxLabel = tk.Label(f1, text = "Max: ")
-        maxLabel.grid(row = 4, column = 2)
-
-        self.maxVar = tk.StringVar()        
-        maxDisplay = tk.Label(f1, textvariable = self.maxVar)
-        maxDisplay.grid(row = 4, column = 3)
-        
-        ampLabel = tk.Label(f1, text = "Amplitude: ")
-        ampLabel.grid(row = 4, column = 4)
-
-        self.ampVar = tk.StringVar()        
-        ampDisplay = tk.Label(f1, textvariable = self.ampVar)
-        ampDisplay.grid(row = 4, column = 5)
+#        minLabel = tk.Label(f1, text = "Min: ")
+#        minLabel.grid(row = 4, column = 0)
+#        
+#        self.minVar = tk.StringVar()
+#        minDisplay = tk.Label(f1, textvariable = self.minVar)
+#        minDisplay.grid(row = 4, column = 1)
+#        
+#        maxLabel = tk.Label(f1, text = "Max: ")
+#        maxLabel.grid(row = 4, column = 2)
+#
+#        self.maxVar = tk.StringVar()        
+#        maxDisplay = tk.Label(f1, textvariable = self.maxVar)
+#        maxDisplay.grid(row = 4, column = 3)
+#        
+#        ampLabel = tk.Label(f1, text = "Amplitude: ")
+#        ampLabel.grid(row = 4, column = 4)
+#
+#        self.ampVar = tk.StringVar()        
+#        ampDisplay = tk.Label(f1, textvariable = self.ampVar)
+#        ampDisplay.grid(row = 4, column = 5)
         
         
         self.graphBehavior = 'total'
+        self.selectionBehavior = 'file'
         self.linewidth = 0.5
         
         #graph novel/familar tick boxes
@@ -289,22 +290,27 @@ class GraphPage(tk.Frame):
         self.R1 = tk.Radiobutton(f1, text = "Flips", variable = self.stimTypeVar, value = 1, command = self.on_stim_select)
         self.R2 = tk.Radiobutton(f1, text = "Flops", variable = self.stimTypeVar, value = 2, command = self.on_stim_select)
         self.R3 = tk.Radiobutton(f1, text = "Average", variable = self.stimTypeVar, value = 3, command = self.on_stim_select)
-        self.R1.grid(row = 3, column = 2)
-        self.R2.grid(row = 3, column = 3)
-        self.R3.grid(row = 3, column = 4)
+        self.R1.grid(row = 2, column = 4)
+        self.R2.grid(row = 2, column = 5)
+        self.R3.grid(row = 2, column = 6)
         
         #amplitude radio buttons
         self.lock_selected = tk.IntVar()
-        self.lock_selected.set(1)
+        self.lock_selected.set(2)
         self.unlocked = tk.Radiobutton(f1, text = "set all amplitudes", variable = self.lock_selected, value = 1)
-        self.locked = tk.Radiobutton(f1, text = "set selected amps only", variable = self.lock_selected, value = 2)
+        self.locked = tk.Radiobutton(f1, text = "set amps by file", variable = self.lock_selected, value = 2)
+        self.stimlocked = tk.Radiobutton(f1, text = "set amps by stim", variable = self.lock_selected, value = 3)
         self.unlocked.grid(row = 3, column = 5)
         self.locked.grid(row = 3, column = 6)
+        self.stimlocked.grid(row = 3, column =7)
 
         #file and stim listboxes
         self.processedList = tk.Listbox(f2,selectmode='extended', exportselection=0, width = 50, height = 10)
         self.processedList.pack(side = tk.RIGHT, padx = 10, pady = 10)
-        self.processedList.bind('<<ListboxSelect>>',self.on_file_select)        
+        self.processedList.bind('<<ListboxSelect>>',self.on_file_select)      
+        self.selectedFiles = list()
+        self.listSelect = False
+
         
         self.selectedBlocks = tk.Listbox(f3,selectmode='extended', exportselection=0, width = 50, height = 40)
         self.selectedBlocks.pack(side=tk.RIGHT, padx = 10, pady = 10)
@@ -428,27 +434,33 @@ class GraphPage(tk.Frame):
         
     #selects an graphs sessions associated with the slected file name     
     def on_file_select(self, evt):
+        self.listSelect = True
         a.clear()
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
+        
         self.selectedBlocks.selection_set(0,tk.END)
+        
         search = self.selectedBlocks.curselection()
         
         for item in search:
             block, key = self.selectedBlocks.get(item).split("  ")
+            
+            
+            if key in selection:
+                self.selectedBlocks.selection_set(item)
+            elif key not in selection:
+                self.selectedBlocks.selection_clear(item)
+                
             ori, block = block.split(" ")
             ori = orientation_lookup[ori][0]
             for key in selection:
                 for ori in Data.grand_amps[key]:
                     self.min_slider.set(Data.grand_amps[key][ori][0]["lower"])
                     self.max_slider.set(Data.grand_amps[key][ori][0]["upper"])
-            
-            if key in selection:
-                self.selectedBlocks.selection_set(item)
-            elif key not in selection:
-                self.selectedBlocks.selection_clear(item)
         #self.graph_selected()
         self.graph_total()
+        self.listSelect = False
     
     def set_amplitudes(self):
         
@@ -478,9 +490,10 @@ class GraphPage(tk.Frame):
                 stim_type = orientation_lookup[orientation][lookupIndex]
                 Data.set_amplitude(Data.orient_avgs, Data.orient_amplitudes, lower, upper, key, stim_type, block)
         
-        for key in file_selection:
-            Data.set_grand_amp(Data.total_avgs, Data.total_amplitudes, lower, upper, key)
-            Data.set_grand_amp(Data.grand_avgs, Data.grand_amps, lower, upper, key)            
+        if self.lock_selected.get() == 2:
+            for key in file_selection:
+                Data.set_grand_amp(Data.total_avgs, Data.total_amplitudes, lower, upper, key)
+                Data.set_grand_amp(Data.grand_avgs, Data.grand_amps, lower, upper, key)            
         
 
     #function to graph selected items only
@@ -516,6 +529,9 @@ class GraphPage(tk.Frame):
                 
 
     def graph_on_select(self, evt):
+        #self.processedList.selection_clear(0,tk.END)
+        self.lock_selected.set(3)
+        
         selection = self.selectedBlocks.curselection()
         stimTypeVar = self.stimTypeVar.get()
         if stimTypeVar == 1:
@@ -527,14 +543,15 @@ class GraphPage(tk.Frame):
             block, key = self.selectedBlocks.get(item).split("  ")
             orientation, block = block.split(" ")
             block = int(block) - 1
-            if stimTypeVar != 3:
-                stim_type = orientation_lookup[orientation][lookupIndex]
-                self.min_slider.set(Data.amplitudes[key][stim_type][block]["lower"])
-                self.max_slider.set(Data.amplitudes[key][stim_type][block]["upper"])
-            elif stimTypeVar == 3:
-                stim_type = orientation_lookup[orientation][lookupIndex]
-                self.min_slider.set(Data.orient_amplitudes[key][stim_type][block]["lower"])
-                self.max_slider.set(Data.orient_amplitudes[key][stim_type][block]["upper"])
+            if self.listSelect == False:
+                if stimTypeVar != 3:
+                    stim_type = orientation_lookup[orientation][lookupIndex]
+                    self.min_slider.set(Data.amplitudes[key][stim_type][block]["lower"])
+                    self.max_slider.set(Data.amplitudes[key][stim_type][block]["upper"])
+                elif stimTypeVar == 3:
+                    stim_type = orientation_lookup[orientation][lookupIndex]
+                    self.min_slider.set(Data.orient_amplitudes[key][stim_type][block]["lower"])
+                    self.max_slider.set(Data.orient_amplitudes[key][stim_type][block]["upper"])
                        
         self.graph_selected()
         
@@ -642,10 +659,10 @@ class GraphPage(tk.Frame):
             print "stim length must be an integer"
             return 500
     
-    def on_slider_move(self, event):
+    def on_slider_move(self, evt):
         if self.lock_selected.get() == 1:
             self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),(Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
-        elif self.lock_selected.get() == 2:
+        elif self.lock_selected.get() == 2 or self.lock_selected.get() == 3:
             self.set_amplitudes()
         self.re_graph()
             
