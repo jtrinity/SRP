@@ -299,7 +299,7 @@ class GraphPage(tk.Frame):
         self.lock_selected.set(2)
         self.unlocked = tk.Radiobutton(f1, text = "set all amplitudes", variable = self.lock_selected, value = 1)
         self.locked = tk.Radiobutton(f1, text = "set amps by file", variable = self.lock_selected, value = 2)
-        self.stimlocked = tk.Radiobutton(f1, text = "set amps by stim", variable = self.lock_selected, value = 3)
+        self.stimlocked = tk.Radiobutton(f1, text = "set amps by session", variable = self.lock_selected, value = 3)
         self.unlocked.grid(row = 3, column = 5)
         self.locked.grid(row = 3, column = 6)
         self.stimlocked.grid(row = 3, column =7)
