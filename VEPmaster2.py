@@ -55,6 +55,7 @@ class Application(tk.Tk):
         #set resolution scaling
         #self.call('tk', 'scaling', 2.0)
         
+        
         container = tk.Frame(self)
         
         container.pack(side="top", fill="both", expand = True)
@@ -88,6 +89,7 @@ class StartPage(tk.Frame):
         f.pack(anchor = 'center')
         label = tk.Label(f, text="Start", font = LARGE_FONT)
         label.grid(row = 0, pady= 10, padx = 10, columnspan = 3)
+
         
         self.loadbox = tk.Listbox(f,selectmode='multiple',exportselection=0, width = 50, height = 10)
         self.loadbox.grid(row = 2, columnspan = 3)
@@ -104,6 +106,8 @@ class StartPage(tk.Frame):
                              command = lambda:  self.clear())
         button3.grid(row = 1, column = 2, padx = 10, pady = 10)
         
+#        w = win.winfo_screenwidth()
+#        h = win.winfo_screenheight()
         
     #loads data into controller and poplates listbox with filenames
     def load(self):
@@ -141,19 +145,29 @@ class GraphPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         
+#        w=root.winfo_screenwidth()
+#        h=root.winfo_screenheight()
+#        root.geometry("400x300+%d+%d" % ( (w-400)/2, (h-300)/2 ) )
+ 
         center_anchor = tk.Frame(self)
         center_anchor.pack(anchor = 'center')
         
+        #windows
+        window1 = tk.Toplevel(self)
+        window2 = tk.Toplevel(self)
+        window3 = tk.Toplevel(self)
+        
+        
         #list boxes to the right
-        right_panel = tk.Frame(center_anchor)
+        right_panel = tk.Frame(window2)
         right_panel.pack(side = tk.RIGHT)
         
         #graph and control panel to the left
-        left_panel = tk.Frame(center_anchor)
+        left_panel = tk.Frame(window3)
         left_panel.pack(anchor = 'center')
         
         #container for control panel
-        f1 = tk.Frame(left_panel)
+        f1 = tk.Frame(window1)
         f1.pack(side = tk.TOP)
         
         #containers for list boxes
@@ -305,6 +319,16 @@ class GraphPage(tk.Frame):
         toolbar = NavigationToolbar2TkAgg(canvas, f5)
         toolbar.update()
         canvas._tkcanvas.pack(side = tk.BOTTOM)
+        
+
+        
+        w = window1.winfo_screenwidth()
+        h = window1.winfo_screenheight()
+        window1.geometry("+%d+%d" % ( w/2 - window1.winfo_width()/2, 0))
+        window2.geometry("+%d+%d" % ( w - window2.winfo_width(), (h)/2 - window2.winfo_height()/2))
+        window3.update()
+        window3.geometry("+%d+%d" % ( (w)/2 - window3.winfo_width()/2, (h)/2 - window3.winfo_height()/2))
+
   
     def graph_all(self):
         a.clear()
@@ -414,6 +438,12 @@ class GraphPage(tk.Frame):
         
         for item in search:
             block, key = self.selectedBlocks.get(item).split("  ")
+            ori, block = block.split(" ")
+            ori = orientation_lookup[ori][0]
+            for key in selection:
+                for ori in Data.grand_amps[key]:
+                    self.min_slider.set(Data.grand_amps[key][ori][0]["lower"])
+                    self.max_slider.set(Data.grand_amps[key][ori][0]["upper"])
             
             if key in selection:
                 self.selectedBlocks.selection_set(item)
@@ -488,6 +518,26 @@ class GraphPage(tk.Frame):
                 
 
     def graph_on_select(self, evt):
+        selection = self.selectedBlocks.curselection()
+        stimTypeVar = self.stimTypeVar.get()
+        if stimTypeVar == 1:
+            lookupIndex = 1
+        elif stimTypeVar == 2 or stimTypeVar == 3:
+            lookupIndex = 0
+            
+        for item in selection:
+            block, key = self.selectedBlocks.get(item).split("  ")
+            orientation, block = block.split(" ")
+            block = int(block) - 1
+            if stimTypeVar != 3:
+                stim_type = orientation_lookup[orientation][lookupIndex]
+                self.min_slider.set(Data.amplitudes[key][stim_type][block]["lower"])
+                self.max_slider.set(Data.amplitudes[key][stim_type][block]["upper"])
+            elif stimTypeVar == 3:
+                stim_type = orientation_lookup[orientation][lookupIndex]
+                self.min_slider.set(Data.orient_amplitudes[key][stim_type][block]["lower"])
+                self.max_slider.set(Data.orient_amplitudes[key][stim_type][block]["upper"])
+                       
         self.graph_selected()
         
     def save(self):

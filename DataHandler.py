@@ -142,7 +142,7 @@ class DataHandler:
                     max_y = array[min_x + lower:upper][max_x]
                     dest[filename][stim][i] = {"units":["V","ms"],
                         "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-                        "max_x":max_x + min_x + lower, "max_y":max_y, "waveform":array}
+                        "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
     
     def set_amplitude(self, source, dest, lower, upper, key, stim_type, block):
         array = source[key][stim_type][block]
@@ -152,7 +152,7 @@ class DataHandler:
         max_y = array[min_x + lower:upper][max_x]
         dest[key][stim_type][block] = {"units":["V","ms"],
             "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-            "max_x":max_x + min_x + lower, "max_y":max_y, "waveform":array}
+            "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
     
     def set_grand_amp(self, source, dest, lower, upper, filename):
         dest[filename] = dict()
@@ -169,7 +169,7 @@ class DataHandler:
                 max_y = array[min_x + lower:upper][max_x]
                 dest[filename][stim][i] = {"units":["V","ms"],
                     "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-                    "max_x":max_x + min_x + lower, "max_y":max_y, "waveform":array}
+                    "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
     
                        
     #graphs all channels in binary data file
