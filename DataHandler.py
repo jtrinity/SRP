@@ -140,7 +140,7 @@ class DataHandler:
                     min_y = array[lower:upper][min_x]
                     max_x = array[min_x + lower:upper].argmax()
                     max_y = array[min_x + lower:upper][max_x]
-                    dest[filename][stim][i] = {"units":["V","ms"],
+                    dest[filename][stim][i] = {"units":["mV","ms"],
                         "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
                         "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
     
