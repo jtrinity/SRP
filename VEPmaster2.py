@@ -215,10 +215,14 @@ class GraphPage(tk.Frame):
                              
         button6.grid(row = 1, column = 5)
         
-        button7 = ttk.Button(f1, text = "Save",
-                     command = lambda: self.save())
+        button7 = ttk.Button(f1, text = "Save All",
+                     command = lambda: self.save('all'))
                              
         button7.grid(row = 1, column = 6)
+        
+        button8 = ttk.Button(f1, text = 'Save Selected',
+                             command = lambda: self.save('selected'))
+        button8.grid(row = 1, column = 7)
         
         stimlabel = tk.Label(f1, text="Stim Length")
         stimlabel.grid(row = 2, column = 0, padx = 10, pady = 10)
@@ -555,14 +559,20 @@ class GraphPage(tk.Frame):
                        
         self.graph_selected()
         
-    def save(self):
+    def save(self, mode):
         self.graph_total
         
-        savedamps = Data.orient_amplitudes.copy()
-        
-        self.graph_total()
-        
-        for fn in Data.orient_amplitudes:
+        if mode == 'all':
+            savedamps = Data.orient_amplitudes.copy()
+        elif mode == 'selected':
+            savedamps = dict()
+            file_selection = self.processedList.curselection()
+            file_selection = [str(self.processedList.get(item)) for item in file_selection]
+            for fn in file_selection:
+                savedamps[fn] = dict()
+            
+        print "saving amplitude data..."
+        for fn in [key for key in savedamps.keys()]:
             c = Data.orient_amplitudes[fn].copy()
             c.update(savedamps[fn])
             savedamps[fn] = c
@@ -575,19 +585,20 @@ class GraphPage(tk.Frame):
                     e = Data.orient_amplitudes[fn][ori][trial]
                     #e.update(savedamps[fn]['ori' + str(ori)][trial])
                     savedamps[fn][orientations[ori][0]]['trial' + str(trial + 1)] = e
+                    print [(i, e[i]) for i in e if i != 'waveform']
             truncated = fn[:-4]
             savedamps[truncated] = savedamps[fn]
             del savedamps[fn]
             
             
         
-        print savedamps
         save = ds.DictionarySaver()
         try:
             save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
         except IndexError:
             print "error saving: missing data"
-
+    
+    
     def on_stim_select(self):
         self.re_graph()
         
