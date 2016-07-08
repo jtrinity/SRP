@@ -36,6 +36,8 @@ orientations = {1:["A","flop"], 2:["A","flip"], 3:["B","flop"], 4:["B","flip"],
                 5:["C","flop"], 6:["C","flip"], 7:["D","flop"], 8:["D","flip"]}
 orientation_lookup = {"A":[1,2], "B":[3,4], "C":[4,5], "D":[7,8]}
 
+best_max = 50000
+
 #global animation
 def animate(i):
     pass
@@ -456,7 +458,10 @@ class GraphPage(tk.Frame):
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
         
-        self.selectedBlocks.selection_set(0,tk.END)
+        if self.lock_selected.get() != 3:
+            self.selectedBlocks.selection_set(0,tk.END)
+        elif self.lock_selected.get() == 3:
+            self.selectedBlocks.selection_clear(0, tk.END)
         
         search = self.selectedBlocks.curselection()
         
@@ -507,7 +512,7 @@ class GraphPage(tk.Frame):
                 stim_type = orientation_lookup[orientation][lookupIndex]
                 Data.set_amplitude(Data.orient_avgs, Data.orient_amplitudes, lower, upper, key, stim_type, block)
         
-        if self.lock_selected.get() == 2:
+        if self.lock_selected.get() == 2 or self.graphBehavior == 'total':
             for key in file_selection:
                 Data.set_grand_amp(Data.total_avgs, Data.total_amplitudes, lower, upper, key)
                 Data.set_grand_amp(Data.grand_avgs, Data.grand_amps, lower, upper, key)            
@@ -636,7 +641,7 @@ class GraphPage(tk.Frame):
         if self.graphBehavior == 'total':
             selection = self.processedList.curselection()
             selection = [self.processedList.get(item) for item in selection]
-            best_y = Data.grand_amps[selection[0]][1][0]['waveform'][mouse_x]
+            best_y = best_max
             best_fn = selection[0]
             best_ori = 1
             if self.stimTypeVar.get() == 3:
@@ -656,11 +661,17 @@ class GraphPage(tk.Frame):
             elif self.stimTypeVar.get() != 3:
                 for fn in selection:
                     for ori in Data.total_amplitudes[fn]:
-                        this_y = Data.total_amplitudes[fn][ori][0]['waveform'][int(mouse_x)]
+                        orientation = orientations[ori][0]
+                        if self.stimTypeVar.get() == 1:
+                            orientation = orientation_lookup[orientation][1]
+                        elif self.stimTypeVar.get() == 2:
+                            orientation = orientation_lookup[orientation][0]
+                        
+                        this_y = Data.total_amplitudes[fn][orientation][0]['waveform'][int(mouse_x)]
                         if abs(this_y - mouse_y) < abs(best_y - mouse_y):
                             best_y = this_y
                             best_fn = fn
-                            best_ori = ori
+                            best_ori = orientation
                 if self.mouse_max_var.get() == 1:
                     Data.total_amplitudes[best_fn][best_ori][0]['max_x'] = mouse_x
                     Data.total_amplitudes[best_fn][best_ori][0]['max_y'] = best_y
@@ -681,7 +692,7 @@ class GraphPage(tk.Frame):
                 return
             stim, key = selection[0].split("  ")
             orientation, block = stim.split(" ")
-            best_y = 50000
+            best_y = best_max
             best_fn = key
             best_ori = orientation_lookup[orientation][0]
             best_session = 0
@@ -708,9 +719,9 @@ class GraphPage(tk.Frame):
                     stim, key = fn.split("  ")
                     orientation, block = stim.split(" ")
                     if self.stimTypeVar.get() == 1:
-                        orientation = orientation_lookup[orientation][2]
-                    elif self.stimTypeVar.get() == 2:
                         orientation = orientation_lookup[orientation][1]
+                    elif self.stimTypeVar.get() == 2:
+                        orientation = orientation_lookup[orientation][0]
                     block = int(block) - 1
                     this_y = Data.amplitudes[key][orientation][block]['waveform'][int(mouse_x)]
                     if abs(this_y - mouse_y) < abs(best_y - mouse_y):
