@@ -32,7 +32,8 @@ a.plot([0 for i in range(500)])
 
 Data = dh.DataHandler()
 
-orientations = {1:["A","flop"], 2:["A","flip"], 3:["B","flop"], 4:["B","flip"], 5:["C","flop"], 6:["C","flip"], 7:["D","flop"], 8:["D","flip"]}
+orientations = {1:["A","flop"], 2:["A","flip"], 3:["B","flop"], 4:["B","flip"],
+                5:["C","flop"], 6:["C","flip"], 7:["D","flop"], 8:["D","flip"]}
 orientation_lookup = {"A":[1,2], "B":[3,4], "C":[4,5], "D":[7,8]}
 
 #global animation
@@ -183,6 +184,9 @@ class GraphPage(tk.Frame):
         f5 = tk.Frame(f4)
         f5.pack(side = tk.BOTTOM)
         
+        f6 = tk.Frame(f4)
+        f6.pack(side = tk.TOP)
+        
         
         label = tk.Label(f1, text="Graph Page", font = LARGE_FONT)
         label.grid(row = 0, column = 0, columnspan = 5)
@@ -215,14 +219,16 @@ class GraphPage(tk.Frame):
                              
         button6.grid(row = 1, column = 5)
         
+
         button7 = ttk.Button(f1, text = "Save All",
-                     command = lambda: self.save('all'))
+                             command = lambda: self.save('all'))         
                              
         button7.grid(row = 1, column = 6)
         
         button8 = ttk.Button(f1, text = 'Save Selected',
                              command = lambda: self.save('selected'))
         button8.grid(row = 1, column = 7)
+        
         
         stimlabel = tk.Label(f1, text="Stim Length")
         stimlabel.grid(row = 2, column = 0, padx = 10, pady = 10)
@@ -288,6 +294,13 @@ class GraphPage(tk.Frame):
         self.novel = tk.Checkbutton(f1, variable = self.novelVar, command = self.on_novel_select, text = orientations[3][0])
         self.novel.grid(row = 3, column = 1)
         
+        self.mouse_min_var = tk.IntVar()
+        self.mouse_max_var = tk.IntVar()
+        self.mouse_min_box = tk.Checkbutton(f6, variable = self.mouse_min_var, command = self.on_mouse_min_select, text = 'allow mouse min selection')
+        self.mouse_max_box = tk.Checkbutton(f6, variable = self.mouse_max_var, command = self.on_mouse_max_select, text = 'allow mouse max selection')
+        self.mouse_min_box.pack(side = tk.LEFT)
+        self.mouse_max_box.pack(side = tk.LEFT)
+        
         #flip/flop/average radio buttons
         self.stimTypeVar = tk.IntVar()
         self.stimTypeVar.set(3)
@@ -329,7 +342,7 @@ class GraphPage(tk.Frame):
         toolbar.update()
         canvas._tkcanvas.pack(side = tk.BOTTOM)
         
-
+        cid = f.canvas.mpl_connect('button_press_event', self.mouse_select)
         
         w = window1.winfo_screenwidth()
         h = window1.winfo_screenheight()
@@ -337,7 +350,7 @@ class GraphPage(tk.Frame):
         window2.geometry("+%d+%d" % ( w - window2.winfo_width(), (h)/2 - window2.winfo_height()/2))
         window3.geometry("+%d+%d" % ( (w)/2 - 500, (h)/2-200))
 
-  
+
     def graph_all(self):
         a.clear()
         self.graphBehavior = 'all'
@@ -534,6 +547,7 @@ class GraphPage(tk.Frame):
 
     def graph_on_select(self, evt):
         #self.processedList.selection_clear(0,tk.END)
+        self.graphBehavior = 'selected'
         self.lock_selected.set(3)
         
         selection = self.selectedBlocks.curselection()
@@ -584,21 +598,18 @@ class GraphPage(tk.Frame):
                 for trial in Data.orient_amplitudes[fn][ori]:
                     e = Data.orient_amplitudes[fn][ori][trial]
                     #e.update(savedamps[fn]['ori' + str(ori)][trial])
-                    savedamps[fn][orientations[ori][0]]['trial' + str(trial + 1)] = e
                     print [(i, e[i]) for i in e if i != 'waveform']
+                    savedamps[fn][orientations[ori][0]]['trial' + str(trial + 1)] = e
             truncated = fn[:-4]
             savedamps[truncated] = savedamps[fn]
             del savedamps[fn]
             
-            
-        
         save = ds.DictionarySaver()
         try:
             save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
         except IndexError:
             print "error saving: missing data"
-    
-    
+
     def on_stim_select(self):
         self.re_graph()
         
@@ -614,6 +625,121 @@ class GraphPage(tk.Frame):
             Data.get_amplitudes(a, b, self.getT2Entry(), self.getT3Entry())
     
 
+    def mouse_select(self, event):
+        mouse_x = event.xdata
+        mouse_y = event.ydata
+        if type(mouse_x) == None or type(mouse_y) == None:
+            return
+        if len(self.processedList.get(0, tk.END)) < 1:
+            return
+            
+        if self.graphBehavior == 'total':
+            selection = self.processedList.curselection()
+            selection = [self.processedList.get(item) for item in selection]
+            best_y = Data.grand_amps[selection[0]][1][0]['waveform'][mouse_x]
+            best_fn = selection[0]
+            best_ori = 1
+            if self.stimTypeVar.get() == 3:
+                for fn in selection:
+                    for ori in Data.grand_amps[fn]:
+                        this_y = Data.grand_amps[fn][ori][0]['waveform'][int(mouse_x)]
+                        if abs(this_y - mouse_y) < abs(best_y - mouse_y):
+                            best_y = this_y
+                            best_fn = fn
+                            best_ori = ori
+                if self.mouse_max_var.get() == 1:
+                    Data.grand_amps[best_fn][best_ori][0]['max_x'] = mouse_x
+                    Data.grand_amps[best_fn][best_ori][0]['max_y'] = best_y
+                elif self.mouse_min_var.get() == 1:
+                    Data.grand_amps[best_fn][best_ori][0]['min_x'] = mouse_x
+                    Data.grand_amps[best_fn][best_ori][0]['min_y'] = best_y
+            elif self.stimTypeVar.get() != 3:
+                for fn in selection:
+                    for ori in Data.total_amplitudes[fn]:
+                        this_y = Data.total_amplitudes[fn][ori][0]['waveform'][int(mouse_x)]
+                        if abs(this_y - mouse_y) < abs(best_y - mouse_y):
+                            best_y = this_y
+                            best_fn = fn
+                            best_ori = ori
+                if self.mouse_max_var.get() == 1:
+                    Data.total_amplitudes[best_fn][best_ori][0]['max_x'] = mouse_x
+                    Data.total_amplitudes[best_fn][best_ori][0]['max_y'] = best_y
+                elif self.mouse_min_var.get() == 1:
+                    Data.total_amplitudes[best_fn][best_ori][0]['min_x'] = mouse_x
+                    Data.total_amplitudes[best_fn][best_ori][0]['min_y'] = best_y
+            
+                
+        elif self.graphBehavior == 'all' or self.graphBehavior == 'selected':
+            if self.graphBehavior == 'all':
+                selection = self.selectedBlocks.get(0, tk.END)
+            elif self.graphBehavior == 'selected':
+                selection = self.selectedBlocks.curselection()
+                selection = [self.selectedBlocks.get(item) for item in selection]
+            #selection = [self.selectedBlocks.get(item) for item in selection]
+            
+            if len(selection) < 1:
+                return
+            stim, key = selection[0].split("  ")
+            orientation, block = stim.split(" ")
+            best_y = 50000
+            best_fn = key
+            best_ori = orientation_lookup[orientation][0]
+            best_session = 0
+            if self.stimTypeVar.get() == 3:
+                for fn in selection:
+                    stim, key = fn.split("  ")
+                    orientation, block = stim.split(" ")
+                    block = int(block) -1
+                    orientation = orientation_lookup[orientation][0]
+                    this_y = Data.orient_amplitudes[key][orientation][block]['waveform'][int(mouse_x)]
+                    if abs(this_y - mouse_y) < abs(best_y - mouse_y):
+                        best_y = this_y
+                        best_fn = key
+                        best_ori = orientation
+                        best_session = block
+                if self.mouse_max_var.get() == 1:
+                    Data.orient_amplitudes[best_fn][best_ori][best_session]['max_x'] = mouse_x
+                    Data.orient_amplitudes[best_fn][best_ori][best_session]['max_y'] = best_y
+                elif self.mouse_min_var.get() == 1:
+                    Data.orient_amplitudes[best_fn][best_ori][best_session]['min_x'] = mouse_x
+                    Data.orient_amplitudes[best_fn][best_ori][best_session]['min_y'] = best_y
+            elif self.stimTypeVar.get() != 3:
+                for fn in selection:
+                    stim, key = fn.split("  ")
+                    orientation, block = stim.split(" ")
+                    if self.stimTypeVar.get() == 1:
+                        orientation = orientation_lookup[orientation][2]
+                    elif self.stimTypeVar.get() == 2:
+                        orientation = orientation_lookup[orientation][1]
+                    block = int(block) - 1
+                    this_y = Data.amplitudes[key][orientation][block]['waveform'][int(mouse_x)]
+                    if abs(this_y - mouse_y) < abs(best_y - mouse_y):
+                        best_y = this_y
+                        best_fn = key
+                        best_ori = orientation
+                        best_session = block
+                if self.mouse_max_var.get() == 1:
+                    Data.amplitudes[best_fn][best_ori][best_session]['max_x'] = mouse_x
+                    Data.amplitudes[best_fn][best_ori][best_session]['max_y'] = best_y
+                elif self.mouse_min_var.get() == 1:
+                    Data.amplitudes[best_fn][best_ori][best_session]['min_x'] = mouse_x
+                    Data.amplitudes[best_fn][best_ori][best_session]['min_y'] = best_y
+                    
+               
+        self.re_graph()
+        #a.plot(int(mouse_x), best_y, marker = '+', color = 'blue', markersize = 10, markeredgewidth = 2)
+        
+        
+        #print ('x=%f, y=%f' % (event.xdata, event.ydata))
+        
+    def on_mouse_min_select(self):
+        if self.mouse_min_var.get() == 1:
+            self.mouse_max_var.set(0)
+            
+    def on_mouse_max_select(self):
+        if self.mouse_max_var.get() == 1:
+            self.mouse_min_var.set(0)
+            
     #brings names in controller into listbox
     def process(self):
         for filename in Data.fileData.keys():
@@ -627,7 +753,8 @@ class GraphPage(tk.Frame):
 #            Data.get_amplitudes(Data.orient_avgs, Data.orient_amplitudes, self.getT2Entry(), self.getT3Entry())
 #            Data.get_amplitudes(Data.total_avgs, Data.total_amplitudes, self.getT2Entry(), self.getT3Entry())
 #            Data.get_amplitudes(Data.grand_avgs, Data.grand_amps, self.getT2Entry(), self.getT3Entry())
-            self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),(Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
+            self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),
+                                 (Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
             
             print "done"
     
@@ -672,7 +799,8 @@ class GraphPage(tk.Frame):
     
     def on_slider_move(self, evt):
         if self.lock_selected.get() == 1:
-            self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),(Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
+            self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),
+                                 (Data.grand_avgs,Data.grand_amps),(Data.total_avgs,Data.total_amplitudes)])
         elif self.lock_selected.get() == 2 or self.lock_selected.get() == 3:
             self.set_amplitudes()
         self.re_graph()
