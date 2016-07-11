@@ -246,16 +246,23 @@ class GraphPage(tk.Frame):
         self.baselineEntry.grid(row = 2, column = 3, padx = 10, pady = 10)
         self.baselineEntry.insert(0, 25)
         
-
+        prestim_label = tk.Label(f1, text = "pre-stim window")
+        prestim_label.grid(row = 2, column = 4, padx = 10, pady = 10)
+        
+        self.prestim_entry = ttk.Entry(f1, text = "pre-stim window")
+        self.prestim_entry.grid(row = 2, column = 5, padx = 10, pady = 10)
+        self.prestim_entry.insert(0, 0)
         
 
+        self.slider_max = 500
+
         #sliding scales for window selection
-        self.min_slider = tk.Scale(f1, from_=0, to=500, label = "min window", orient = tk.HORIZONTAL,
+        self.min_slider = tk.Scale(f1, from_=0, to=self.slider_max, label = "min window", orient = tk.HORIZONTAL,
                                    command = self.on_slider_move)
         self.min_slider.grid(row = 3, column = 2, padx = 10, pady = 10)
         self.min_slider.set(25)
         
-        self.max_slider = tk.Scale(f1, from_=0, to=500, label = "max window", orient = tk.HORIZONTAL,
+        self.max_slider = tk.Scale(f1, from_=0, to=self.slider_max, label = "max window", orient = tk.HORIZONTAL,
                                    command = self.on_slider_move)
         self.max_slider.grid(row = 3, column = 3, padx = 10, pady = 10)
         self.max_slider.set(250)
@@ -310,9 +317,9 @@ class GraphPage(tk.Frame):
         self.R1 = tk.Radiobutton(f1, text = "Flips", variable = self.stimTypeVar, value = 1, command = self.on_stim_select)
         self.R2 = tk.Radiobutton(f1, text = "Flops", variable = self.stimTypeVar, value = 2, command = self.on_stim_select)
         self.R3 = tk.Radiobutton(f1, text = "Average", variable = self.stimTypeVar, value = 3, command = self.on_stim_select)
-        self.R1.grid(row = 2, column = 4)
-        self.R2.grid(row = 2, column = 5)
-        self.R3.grid(row = 2, column = 6)
+        self.R1.grid(row = 4, column = 0)
+        self.R2.grid(row = 4, column = 1)
+        self.R3.grid(row = 4, column = 2)
         
         #amplitude radio buttons
         self.lock_selected = tk.IntVar()
@@ -762,9 +769,18 @@ class GraphPage(tk.Frame):
             print "processing " + filename + "..."
             stimLength = self.getStimLengthEntry()
             baseline = self.getBaselineEntry()
+            prestim_baseline = self.get_prestim_entry()
+            
+            #update slider values
+            self.slider_max = stimLength + prestim_baseline
+            self.max_slider.config(to = self.slider_max)
+            self.min_slider.config(to = self.slider_max)
+            self.min_slider.update()
+            self.max_slider.update()
+            
             
             #need to add channel # selection
-            Data.process_file(filename, Data.detect_channels(filename), stimLength, baseline)
+            Data.process_file(filename, Data.detect_channels(filename), stimLength, baseline, prestim_baseline)
 #            Data.get_amplitudes(Data.stim_avgs, Data.amplitudes, self.getT2Entry(), self.getT3Entry())
 #            Data.get_amplitudes(Data.orient_avgs, Data.orient_amplitudes, self.getT2Entry(), self.getT3Entry())
 #            Data.get_amplitudes(Data.total_avgs, Data.total_amplitudes, self.getT2Entry(), self.getT3Entry())
@@ -813,6 +829,19 @@ class GraphPage(tk.Frame):
             print "stim length must be an integer"
             return 500
     
+    def get_prestim_entry(self):
+        window = self.prestim_entry.get()
+        if window == '':
+            return 0
+        if int(window) == 0:
+            return 0
+        try:
+            window = int(window)
+            return window
+        except ValueError:
+            print "stim length must be an integer"
+            return 0
+    
     def on_slider_move(self, evt):
         if self.lock_selected.get() == 1:
             self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),
@@ -826,8 +855,8 @@ class GraphPage(tk.Frame):
         minwin = self.min_slider.get()
         if maxwin <= minwin:
             minwin = 25
-            self.min_slider.set(25)
-            self.max_slider.set(250)
+            self.min_slider.set(25 + self.get_prestim_entry())
+            self.max_slider.set(250 + self.get_prestim_entry())
         
         return minwin
             
@@ -836,8 +865,8 @@ class GraphPage(tk.Frame):
         minwin = self.min_slider.get()
         if maxwin <= minwin:
             maxwin = 250
-            self.min_slider.set(25)
-            self.max_slider.set(250)
+            self.min_slider.set(25 + self.get_prestim_entry())
+            self.max_slider.set(250 + self.get_prestim_entry())
         
         return maxwin
     
