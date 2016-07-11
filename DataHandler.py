@@ -142,7 +142,7 @@ class DataHandler:
                     max_y = array[min_x + lower:upper][max_x]
                     dest[filename][stim][i] = {"units":["mV","ms"],
                         "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-                        "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
+                        "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "modified":False, "waveform":array}
     
     def set_amplitude(self, source, dest, lower, upper, key, stim_type, block):
         array = source[key][stim_type][block]
@@ -150,16 +150,17 @@ class DataHandler:
         min_y = array[lower:upper][min_x]
         max_x = array[min_x + lower:upper].argmax()
         max_y = array[min_x + lower:upper][max_x]
-        dest[key][stim_type][block] = {"units":["V","ms"],
-            "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-            "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
+        if dest[key][stim_type][block]["modified"] == False:
+            dest[key][stim_type][block] = {"units":["V","ms"],
+                "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
+                "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "modified":False, "waveform":array}
     
     def set_grand_amp(self, source, dest, lower, upper, filename):
-        dest[filename] = dict()
+        #dest[filename] = dict()
         for stim in source[filename]:
             
             #change list to dict with timestamp key
-            dest[filename][stim] = dict()
+            #dest[filename][stim] = dict()
             for i in range(len(source[filename][stim])):
                 array = source[filename][stim][i]
 
@@ -167,9 +168,10 @@ class DataHandler:
                 min_y = array[lower:upper][min_x]
                 max_x = array[min_x + lower:upper].argmax()
                 max_y = array[min_x + lower:upper][max_x]
-                dest[filename][stim][i] = {"units":["V","ms"],
-                    "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-                    "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
+                if dest[filename][stim][i]["modified"] == False:
+                    dest[filename][stim][i] = {"units":["V","ms"],
+                        "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
+                        "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "modified":False, "waveform":array}
     
                        
     #graphs all channels in binary data file

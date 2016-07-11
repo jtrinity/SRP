@@ -295,6 +295,7 @@ class GraphPage(tk.Frame):
         self.novelVar = tk.IntVar()
         self.novel = tk.Checkbutton(f1, variable = self.novelVar, command = self.on_novel_select, text = orientations[3][0])
         self.novel.grid(row = 3, column = 1)
+        self.novelVar.set(1)
         
         self.mouse_min_var = tk.IntVar()
         self.mouse_max_var = tk.IntVar()
@@ -476,10 +477,10 @@ class GraphPage(tk.Frame):
                 
             ori, block = block.split(" ")
             ori = orientation_lookup[ori][0]
-            for key in selection:
-                for ori in Data.grand_amps[key]:
-                    self.min_slider.set(Data.grand_amps[key][ori][0]["lower"])
-                    self.max_slider.set(Data.grand_amps[key][ori][0]["upper"])
+        for key in selection:
+            for ori in Data.grand_amps[key]:
+                self.min_slider.set(Data.grand_amps[key][ori][0]["lower"])
+                self.max_slider.set(Data.grand_amps[key][ori][0]["upper"])
         #self.graph_selected()
         self.graph_total()
         self.listSelect = False
@@ -658,6 +659,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.grand_amps[best_fn][best_ori][0]['min_x'] = mouse_x
                     Data.grand_amps[best_fn][best_ori][0]['min_y'] = best_y
+                Data.grand_amps[best_fn][best_ori][0]['modified'] = True
             elif self.stimTypeVar.get() != 3:
                 for fn in selection:
                     for ori in Data.total_amplitudes[fn]:
@@ -678,6 +680,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.total_amplitudes[best_fn][best_ori][0]['min_x'] = mouse_x
                     Data.total_amplitudes[best_fn][best_ori][0]['min_y'] = best_y
+                Data.total_amplitudes[best_fn][best_ori][0]['modified'] = True
             
                 
         elif self.graphBehavior == 'all' or self.graphBehavior == 'selected':
@@ -714,6 +717,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.orient_amplitudes[best_fn][best_ori][best_session]['min_x'] = mouse_x
                     Data.orient_amplitudes[best_fn][best_ori][best_session]['min_y'] = best_y
+                Data.orient_amplitudes[best_fn][best_ori][best_session]['modified'] = True
             elif self.stimTypeVar.get() != 3:
                 for fn in selection:
                     stim, key = fn.split("  ")
@@ -735,6 +739,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.amplitudes[best_fn][best_ori][best_session]['min_x'] = mouse_x
                     Data.amplitudes[best_fn][best_ori][best_session]['min_y'] = best_y
+                Data.amplitudes[best_fn][best_ori][best_session]['modified'] = True
                     
                
         self.re_graph()
