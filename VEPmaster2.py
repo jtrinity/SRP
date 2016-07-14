@@ -24,6 +24,7 @@ from matplotlib import style
 
 #global figures
 LARGE_FONT = ("Verdana", 12)
+SMALL_FONT = ("Verdana", 9)
 style.use("bmh")
 
 f = Figure(figsize = (10,5), dpi = 100)
@@ -89,12 +90,15 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         f = tk.Frame(self)
         f.pack(anchor = 'center')
-        label = tk.Label(f, text="Start", font = LARGE_FONT)
+        label = tk.Label(f, text="load files", font = LARGE_FONT)
         label.grid(row = 0, pady= 10, padx = 10, columnspan = 3)
+        
+        warning = tk.Label(f, text = "filenames should not contain spaces", font = SMALL_FONT)
+        warning.grid(row = 3,pady = 1, columnspan = 3)
 
         
         self.loadbox = tk.Listbox(f,selectmode='multiple',exportselection=0, width = 50, height = 10)
-        self.loadbox.grid(row = 2, columnspan = 3)
+        self.loadbox.grid(row = 2, padx = 5, columnspan = 3)
         
         button1 = ttk.Button(f, text="Load",
                            command = lambda: self.load())
@@ -156,8 +160,11 @@ class GraphPage(tk.Frame):
         
         #windows
         window1 = tk.Toplevel(self)
+        window1.title("Toolbar")
         window2 = tk.Toplevel(self)
+        window2.title("Files")
         window3 = tk.Toplevel(self)
+        window3.title("Graph")
         
         
         #list boxes to the right
@@ -189,9 +196,15 @@ class GraphPage(tk.Frame):
         f6 = tk.Frame(f4)
         f6.pack(side = tk.TOP)
         
+        fileLabel = tk.Label(f2, text = "Files", font = LARGE_FONT)
+        fileLabel.pack(side = tk.TOP)
         
-        label = tk.Label(f1, text="Graph Page", font = LARGE_FONT)
-        label.grid(row = 0, column = 0, columnspan = 5)
+        sessionLabel= tk.Label(f3, text = "Sessions", font = LARGE_FONT)
+        sessionLabel.pack(side = tk.TOP)
+        
+        
+#        label = tk.Label(f1, text="Graph Page", font = LARGE_FONT)
+#        label.grid(row = 0, column = 0, columnspan = 5)
         
         #buttons
         button1 = ttk.Button(f1, text = "Back to Home",
