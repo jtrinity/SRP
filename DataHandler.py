@@ -25,6 +25,7 @@ class DataHandler:
         self.stimLength = 500
         self.baseline = 25
         self.num_channels = 4
+        self.prestim_baseline = 0
         
         #data of interest
         self.timeCodes = dict()
@@ -50,7 +51,7 @@ class DataHandler:
         self.filenames[fn] = filename
         
         stimCodes = [i + 1 for i in range(self.num_channels)]
-        self.fileVars[fn] = {"num_channels":self.num_channels, "stimCodes":stimCodes, "stimLength":self.stimLength, "baseline":self.baseline}        
+        self.fileVars[fn] = {"num_channels":self.num_channels, "stimCodes":stimCodes, "stimLength":self.stimLength, "baseline":self.baseline, "prestim_baseline":self.prestim_baseline}        
         
         f = cp.ChannelPlot()
         f.setFilename(filename)
@@ -59,7 +60,7 @@ class DataHandler:
         
         self.fileData[fn] = f.data
     
-    def process_file(self, filename, num_channels, stimLength, baseline):
+    def process_file(self, filename, num_channels, stimLength, baseline, prestim_baseline):
         
         stimCodes = [i + 1 for i in range(num_channels)]
         
@@ -70,6 +71,8 @@ class DataHandler:
         d = SRP.SRPdecoder()
         d.baseline = baseline
         d.stimLength = stimLength
+        d.prestim_baseline = prestim_baseline
+        self.prestim_baseline = prestim_baseline
         
         timeCodes = d.GetCodeList(signalChannel, codeChannels)
         stimTimeStamps = {code:d.GetTimeStamps(code, timeCodes) for code in stimCodes}
@@ -126,6 +129,8 @@ class DataHandler:
     #dict(filenames) dict(keycodes) list(stim averages)
     # 1 file, 4 keycodes, 5 stim blocks, 500 ms each
     def get_amplitudes(self, source, dest, lower, upper):
+        lower += self.prestim_baseline
+        upper += self.prestim_baseline
         dest.clear()
         for filename in source:
             dest[filename] = dict()
@@ -142,7 +147,7 @@ class DataHandler:
                     max_y = array[min_x + lower:upper][max_x]
                     dest[filename][stim][i] = {"units":["mV","ms"],
                         "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-                        "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
+                        "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "modified":False, "waveform":array}
     
     def set_amplitude(self, source, dest, lower, upper, key, stim_type, block):
         array = source[key][stim_type][block]
@@ -150,16 +155,17 @@ class DataHandler:
         min_y = array[lower:upper][min_x]
         max_x = array[min_x + lower:upper].argmax()
         max_y = array[min_x + lower:upper][max_x]
-        dest[key][stim_type][block] = {"units":["V","ms"],
-            "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-            "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
+        if dest[key][stim_type][block]["modified"] == False:
+            dest[key][stim_type][block] = {"units":["V","ms"],
+                "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
+                "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "modified":False, "waveform":array}
     
     def set_grand_amp(self, source, dest, lower, upper, filename):
-        dest[filename] = dict()
+        #dest[filename] = dict()
         for stim in source[filename]:
             
             #change list to dict with timestamp key
-            dest[filename][stim] = dict()
+            #dest[filename][stim] = dict()
             for i in range(len(source[filename][stim])):
                 array = source[filename][stim][i]
 
@@ -167,9 +173,10 @@ class DataHandler:
                 min_y = array[lower:upper][min_x]
                 max_x = array[min_x + lower:upper].argmax()
                 max_y = array[min_x + lower:upper][max_x]
-                dest[filename][stim][i] = {"units":["V","ms"],
-                    "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
-                    "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "waveform":array}
+                if dest[filename][stim][i]["modified"] == False:
+                    dest[filename][stim][i] = {"units":["V","ms"],
+                        "amplitude":max_y-min_y,"min_x":min_x + lower, "min_y":min_y,
+                        "max_x":max_x + min_x + lower, "max_y":max_y, "lower":lower, "upper":upper, "modified":False, "waveform":array}
     
                        
     #graphs all channels in binary data file
@@ -206,7 +213,7 @@ if __name__ == "__main__":
     fn = os.path.basename(filename)
     dh = DataHandler()
     dh.add_file(filename)
-    dh.process_file(fn, 4, dh.stimLength, dh.baseline)
+    dh.process_file(fn, 4, dh.stimLength, dh.baseline, dh.prestim_baseline)
     dh.get_amplitudes(dh.stim_avgs, dh.amplitudes, 25, 250)
     dh.graph_raw(fn)
     

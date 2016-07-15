@@ -24,6 +24,7 @@ from matplotlib import style
 
 #global figures
 LARGE_FONT = ("Verdana", 12)
+SMALL_FONT = ("Verdana", 9)
 style.use("bmh")
 
 f = Figure(figsize = (10,5), dpi = 100)
@@ -89,12 +90,15 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         f = tk.Frame(self)
         f.pack(anchor = 'center')
-        label = tk.Label(f, text="Start", font = LARGE_FONT)
+        label = tk.Label(f, text="load files", font = LARGE_FONT)
         label.grid(row = 0, pady= 10, padx = 10, columnspan = 3)
+        
+        warning = tk.Label(f, text = "filenames should not contain spaces", font = SMALL_FONT)
+        warning.grid(row = 3,pady = 1, columnspan = 3)
 
         
         self.loadbox = tk.Listbox(f,selectmode='multiple',exportselection=0, width = 50, height = 10)
-        self.loadbox.grid(row = 2, columnspan = 3)
+        self.loadbox.grid(row = 2, padx = 5, columnspan = 3)
         
         button1 = ttk.Button(f, text="Load",
                            command = lambda: self.load())
@@ -156,8 +160,11 @@ class GraphPage(tk.Frame):
         
         #windows
         window1 = tk.Toplevel(self)
+        window1.title("Toolbar")
         window2 = tk.Toplevel(self)
+        window2.title("Files")
         window3 = tk.Toplevel(self)
+        window3.title("Graph")
         
         
         #list boxes to the right
@@ -189,9 +196,15 @@ class GraphPage(tk.Frame):
         f6 = tk.Frame(f4)
         f6.pack(side = tk.TOP)
         
+        fileLabel = tk.Label(f2, text = "Files", font = LARGE_FONT)
+        fileLabel.pack(side = tk.TOP)
         
-        label = tk.Label(f1, text="Graph Page", font = LARGE_FONT)
-        label.grid(row = 0, column = 0, columnspan = 5)
+        sessionLabel= tk.Label(f3, text = "Sessions", font = LARGE_FONT)
+        sessionLabel.pack(side = tk.TOP)
+        
+        
+#        label = tk.Label(f1, text="Graph Page", font = LARGE_FONT)
+#        label.grid(row = 0, column = 0, columnspan = 5)
         
         #buttons
         button1 = ttk.Button(f1, text = "Back to Home",
@@ -246,16 +259,23 @@ class GraphPage(tk.Frame):
         self.baselineEntry.grid(row = 2, column = 3, padx = 10, pady = 10)
         self.baselineEntry.insert(0, 25)
         
-
+        prestim_label = tk.Label(f1, text = "pre-stim window")
+        prestim_label.grid(row = 2, column = 4, padx = 10, pady = 10)
+        
+        self.prestim_entry = ttk.Entry(f1, text = "pre-stim window")
+        self.prestim_entry.grid(row = 2, column = 5, padx = 10, pady = 10)
+        self.prestim_entry.insert(0, 0)
         
 
+        self.slider_max = 500
+
         #sliding scales for window selection
-        self.min_slider = tk.Scale(f1, from_=0, to=500, label = "min window", orient = tk.HORIZONTAL,
+        self.min_slider = tk.Scale(f1, from_=0, to=self.slider_max, label = "min window", orient = tk.HORIZONTAL,
                                    command = self.on_slider_move)
         self.min_slider.grid(row = 3, column = 2, padx = 10, pady = 10)
         self.min_slider.set(25)
         
-        self.max_slider = tk.Scale(f1, from_=0, to=500, label = "max window", orient = tk.HORIZONTAL,
+        self.max_slider = tk.Scale(f1, from_=0, to=self.slider_max, label = "max window", orient = tk.HORIZONTAL,
                                    command = self.on_slider_move)
         self.max_slider.grid(row = 3, column = 3, padx = 10, pady = 10)
         self.max_slider.set(250)
@@ -295,6 +315,7 @@ class GraphPage(tk.Frame):
         self.novelVar = tk.IntVar()
         self.novel = tk.Checkbutton(f1, variable = self.novelVar, command = self.on_novel_select, text = orientations[3][0])
         self.novel.grid(row = 3, column = 1)
+        self.novelVar.set(1)
         
         self.mouse_min_var = tk.IntVar()
         self.mouse_max_var = tk.IntVar()
@@ -309,9 +330,9 @@ class GraphPage(tk.Frame):
         self.R1 = tk.Radiobutton(f1, text = "Flips", variable = self.stimTypeVar, value = 1, command = self.on_stim_select)
         self.R2 = tk.Radiobutton(f1, text = "Flops", variable = self.stimTypeVar, value = 2, command = self.on_stim_select)
         self.R3 = tk.Radiobutton(f1, text = "Average", variable = self.stimTypeVar, value = 3, command = self.on_stim_select)
-        self.R1.grid(row = 2, column = 4)
-        self.R2.grid(row = 2, column = 5)
-        self.R3.grid(row = 2, column = 6)
+        self.R1.grid(row = 4, column = 0)
+        self.R2.grid(row = 4, column = 1)
+        self.R3.grid(row = 4, column = 2)
         
         #amplitude radio buttons
         self.lock_selected = tk.IntVar()
@@ -476,10 +497,10 @@ class GraphPage(tk.Frame):
                 
             ori, block = block.split(" ")
             ori = orientation_lookup[ori][0]
-            for key in selection:
-                for ori in Data.grand_amps[key]:
-                    self.min_slider.set(Data.grand_amps[key][ori][0]["lower"])
-                    self.max_slider.set(Data.grand_amps[key][ori][0]["upper"])
+        for key in selection:
+            for ori in Data.grand_amps[key]:
+                self.min_slider.set(Data.grand_amps[key][ori][0]["lower"])
+                self.max_slider.set(Data.grand_amps[key][ori][0]["upper"])
         #self.graph_selected()
         self.graph_total()
         self.listSelect = False
@@ -658,6 +679,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.grand_amps[best_fn][best_ori][0]['min_x'] = mouse_x
                     Data.grand_amps[best_fn][best_ori][0]['min_y'] = best_y
+                Data.grand_amps[best_fn][best_ori][0]['modified'] = True
             elif self.stimTypeVar.get() != 3:
                 for fn in selection:
                     for ori in Data.total_amplitudes[fn]:
@@ -678,6 +700,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.total_amplitudes[best_fn][best_ori][0]['min_x'] = mouse_x
                     Data.total_amplitudes[best_fn][best_ori][0]['min_y'] = best_y
+                Data.total_amplitudes[best_fn][best_ori][0]['modified'] = True
             
                 
         elif self.graphBehavior == 'all' or self.graphBehavior == 'selected':
@@ -714,6 +737,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.orient_amplitudes[best_fn][best_ori][best_session]['min_x'] = mouse_x
                     Data.orient_amplitudes[best_fn][best_ori][best_session]['min_y'] = best_y
+                Data.orient_amplitudes[best_fn][best_ori][best_session]['modified'] = True
             elif self.stimTypeVar.get() != 3:
                 for fn in selection:
                     stim, key = fn.split("  ")
@@ -735,6 +759,7 @@ class GraphPage(tk.Frame):
                 elif self.mouse_min_var.get() == 1:
                     Data.amplitudes[best_fn][best_ori][best_session]['min_x'] = mouse_x
                     Data.amplitudes[best_fn][best_ori][best_session]['min_y'] = best_y
+                Data.amplitudes[best_fn][best_ori][best_session]['modified'] = True
                     
                
         self.re_graph()
@@ -757,9 +782,18 @@ class GraphPage(tk.Frame):
             print "processing " + filename + "..."
             stimLength = self.getStimLengthEntry()
             baseline = self.getBaselineEntry()
+            prestim_baseline = self.get_prestim_entry()
+            
+            #update slider values
+            self.slider_max = stimLength + prestim_baseline
+            self.max_slider.config(to = self.slider_max)
+            self.min_slider.config(to = self.slider_max)
+            self.min_slider.update()
+            self.max_slider.update()
+            
             
             #need to add channel # selection
-            Data.process_file(filename, Data.detect_channels(filename), stimLength, baseline)
+            Data.process_file(filename, Data.detect_channels(filename), stimLength, baseline, prestim_baseline)
 #            Data.get_amplitudes(Data.stim_avgs, Data.amplitudes, self.getT2Entry(), self.getT3Entry())
 #            Data.get_amplitudes(Data.orient_avgs, Data.orient_amplitudes, self.getT2Entry(), self.getT3Entry())
 #            Data.get_amplitudes(Data.total_avgs, Data.total_amplitudes, self.getT2Entry(), self.getT3Entry())
@@ -808,6 +842,19 @@ class GraphPage(tk.Frame):
             print "stim length must be an integer"
             return 500
     
+    def get_prestim_entry(self):
+        window = self.prestim_entry.get()
+        if window == '':
+            return 0
+        if int(window) == 0:
+            return 0
+        try:
+            window = int(window)
+            return window
+        except ValueError:
+            print "stim length must be an integer"
+            return 0
+    
     def on_slider_move(self, evt):
         if self.lock_selected.get() == 1:
             self.get_amplitudes([(Data.stim_avgs,Data.amplitudes),(Data.orient_avgs,Data.orient_amplitudes),
@@ -821,8 +868,8 @@ class GraphPage(tk.Frame):
         minwin = self.min_slider.get()
         if maxwin <= minwin:
             minwin = 25
-            self.min_slider.set(25)
-            self.max_slider.set(250)
+            self.min_slider.set(25 + self.get_prestim_entry())
+            self.max_slider.set(250 + self.get_prestim_entry())
         
         return minwin
             
@@ -831,8 +878,8 @@ class GraphPage(tk.Frame):
         minwin = self.min_slider.get()
         if maxwin <= minwin:
             maxwin = 250
-            self.min_slider.set(25)
-            self.max_slider.set(250)
+            self.min_slider.set(25 + self.get_prestim_entry())
+            self.max_slider.set(250 + self.get_prestim_entry())
         
         return maxwin
     

@@ -28,6 +28,7 @@ class SRPdecoder:
         self.voltageThreshold = 2.5
         self.stimLength = 500
         self.baseline = 25
+        self.prestim_baseline = 0
 
     #Gives back chunks of the input signalChannel corresponding to flip and flop stim lists
     def GetStimLists(self, signalChannel, numStims, avgLength, stimTimeStamps):
@@ -36,10 +37,10 @@ class SRPdecoder:
             if self.StimLength(stimTimeStamps[1][i]) < 0.5*avgLength:
                 for k in range(2, len(stims)+1):
                     for j in range(numStims):
-                        stims[k].append(signalChannel[stimTimeStamps[k][i+j][0]:stimTimeStamps[k][i+j][0]+self.stimLength])
+                        stims[k].append(signalChannel[stimTimeStamps[k][i+j][0] - self.prestim_baseline:stimTimeStamps[k][i+j][0]+self.stimLength])
                 for j in range(numStims - 1):
-                    stims[1].append(signalChannel[stimTimeStamps[1][1+i+j][0]:stimTimeStamps[1][1+i+j][0] + self.stimLength])
-                stims[1].append(signalChannel[stimTimeStamps[2][i + numStims - 1][0] + self.stimLength:stimTimeStamps[2][i + numStims-1][0]+2* self.stimLength])
+                    stims[1].append(signalChannel[stimTimeStamps[1][1+i+j][0] - self.prestim_baseline:stimTimeStamps[1][1+i+j][0] + self.stimLength])
+                stims[1].append(signalChannel[stimTimeStamps[2][i + numStims - 1][0] + self.stimLength - self.prestim_baseline:stimTimeStamps[2][i + numStims-1][0]+2* self.stimLength])
                 
         return stims
     
@@ -49,7 +50,7 @@ class SRPdecoder:
         for i in range(0, len(flips), numStims):
             avg = np.zeros(len(flips[0]))
             for j in range(numStims):
-                avg += np.array(flips[i+j]-np.average(flips[i+j][:self.baseline]))
+                avg += np.array(flips[i+j]-np.average(flips[i+j][:self.baseline + self.prestim_baseline]))
             avg /= numStims
             #avg += i*np.ones(len(flips[0]))
             avgs.append(avg)
