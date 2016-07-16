@@ -633,6 +633,8 @@ class GraphPage(tk.Frame):
         save = ds.DictionarySaver()
         try:
             save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
+            root=tk.Tk()  # maybe this could go at start of script - and all windows destroyed on "EXIT"?
+            root.destroy()
         except IndexError:
             print "error saving: missing data"
 

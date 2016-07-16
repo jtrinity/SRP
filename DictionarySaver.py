@@ -9,7 +9,6 @@ import scipy.io as sio
 import tkFileDialog
 
 
-
 class DictionarySaver():
     def __init__(self):
 
