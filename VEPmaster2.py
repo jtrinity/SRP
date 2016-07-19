@@ -636,7 +636,6 @@ class GraphPage(tk.Frame):
             
         save = ds.DictionarySaver()
         try:
-<<<<<<< HEAD
             save_loc = save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
             print save_loc
             if os.path.splitext(save_loc)[1] == ".p":
@@ -650,27 +649,29 @@ class GraphPage(tk.Frame):
                 savep['stim_avgs'] = Data.stim_avgs
                 with open(save_loc, "wb") as openfile:
                     pickle.dump(savep, openfile)
-=======
-            save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
-            root=tk.Tk()  # maybe this could go at start of script - and all windows destroyed on "EXIT"?
-            root.destroy()
->>>>>>> origin/master
+
         except IndexError:
             print "error saving: missing data"
     
     def load_data(self):
+        
+
+        
         files = tkFileDialog.askopenfilenames(title='Choose files')
         filelist = list(files)
         for filename in filelist:
             if os.path.splitext(filename)[1] == ".p":
                 with open(filename, "rb") as openfile:
+                    
+                    self.processedList.delete(0, tk.END)
+                    self.selectedBlocks.delete(0, tk.END)
+                    
+                    Data.clear_all()
+                    
+                    self.re_graph()
+                    
                     loaded_data = pickle.load(openfile)
-#                    for filename in loaded_data:
-#                        Data.orient_amplitudes[filename] = dict()
-#                        for ori in loaded_data[filename]:
-#                            if type(ori) == int:
-#                                Data.orient_amplitudes[filename][ori] = dict()
-#                            for
+                    
                     Data.grand_amps = loaded_data['grand_amps']
                     Data.orient_amplitudes = loaded_data['orient_amplitudes']
                     Data.grand_avgs = loaded_data['grand_avgs']
