@@ -9,6 +9,7 @@ import Tkinter as tk
 import ttk
 import tkFileDialog
 import os
+import pickle
 
 import DictionarySaver as ds
 import DataHandler as dh
@@ -207,9 +208,9 @@ class GraphPage(tk.Frame):
 #        label.grid(row = 0, column = 0, columnspan = 5)
         
         #buttons
-        button1 = ttk.Button(f1, text = "Back to Home",
-                            command = lambda: controller.show_frame(StartPage))
-        button1.grid(row = 1, column = 0)
+#        button1 = ttk.Button(f1, text = "Back to Home",
+#                            command = lambda: controller.show_frame(StartPage))
+#        button1.grid(row = 1, column = 0)
         
         button4 = ttk.Button(f1, text = "Process Loaded Data",
                              command = lambda: self.process())
@@ -244,6 +245,9 @@ class GraphPage(tk.Frame):
                              command = lambda: self.save('selected'))
         button8.grid(row = 1, column = 7)
         
+        button9 = ttk.Button(f1, text = 'Load Data',
+                             command = lambda: self.load_data())
+        button9.grid(row = 1, column = 8)
         
         stimlabel = tk.Label(f1, text="Stim Length")
         stimlabel.grid(row = 2, column = 0, padx = 10, pady = 10)
@@ -632,9 +636,57 @@ class GraphPage(tk.Frame):
             
         save = ds.DictionarySaver()
         try:
-            save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
+            save_loc = save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
+            print save_loc
+            if os.path.splitext(save_loc)[1] == ".p":
+                savep = dict()
+                savep['grand_amps'] = Data.grand_amps
+                savep['orient_amplitudes'] = Data.orient_amplitudes
+                savep['grand_avgs'] = Data.grand_avgs
+                savep['orient_avgs'] = Data.orient_avgs
+                savep['total_avgs'] = Data.total_avgs
+                savep['total_amps'] = Data.total_amplitudes
+                savep['stim_avgs'] = Data.stim_avgs
+                with open(save_loc, "wb") as openfile:
+                    pickle.dump(savep, openfile)
         except IndexError:
             print "error saving: missing data"
+    
+    def load_data(self):
+        files = tkFileDialog.askopenfilenames(title='Choose files')
+        filelist = list(files)
+        for filename in filelist:
+            if os.path.splitext(filename)[1] == ".p":
+                with open(filename, "rb") as openfile:
+                    loaded_data = pickle.load(openfile)
+#                    for filename in loaded_data:
+#                        Data.orient_amplitudes[filename] = dict()
+#                        for ori in loaded_data[filename]:
+#                            if type(ori) == int:
+#                                Data.orient_amplitudes[filename][ori] = dict()
+#                            for
+                    Data.grand_amps = loaded_data['grand_amps']
+                    Data.orient_amplitudes = loaded_data['orient_amplitudes']
+                    Data.grand_avgs = loaded_data['grand_avgs']
+                    Data.orient_avgs = loaded_data['orient_avgs']
+                    Data.total_avgs = loaded_data['total_avgs']
+                    Data.total_amplitudes = loaded_data['total_amps']
+                    Data.stim_avgs = loaded_data['stim_avgs']
+                    
+                    for a, b in enumerate(Data.grand_amps):
+                        self.processedList.insert(a, b)
+                    
+                    for a, b in enumerate(Data.stim_avgs):
+                        for c in Data.stim_avgs[b]:
+                            for i in range(len(Data.stim_avgs[b][c])):
+                                if orientations[c][1] == "flip":
+                                    self.selectedBlocks.insert(tk.END, orientations[c][0] + " " + str(i+1) + "  " + b)
+                    
+#                        
+                        
+                    
+                
+        
 
     def on_stim_select(self):
         self.re_graph()
