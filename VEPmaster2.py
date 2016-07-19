@@ -636,6 +636,7 @@ class GraphPage(tk.Frame):
             
         save = ds.DictionarySaver()
         try:
+<<<<<<< HEAD
             save_loc = save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
             print save_loc
             if os.path.splitext(save_loc)[1] == ".p":
@@ -649,6 +650,11 @@ class GraphPage(tk.Frame):
                 savep['stim_avgs'] = Data.stim_avgs
                 with open(save_loc, "wb") as openfile:
                     pickle.dump(savep, openfile)
+=======
+            save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
+            root=tk.Tk()  # maybe this could go at start of script - and all windows destroyed on "EXIT"?
+            root.destroy()
+>>>>>>> origin/master
         except IndexError:
             print "error saving: missing data"
     

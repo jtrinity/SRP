@@ -10,7 +10,6 @@ import tkFileDialog
 from os import path
 
 
-
 class DictionarySaver():
     def __init__(self):
 
