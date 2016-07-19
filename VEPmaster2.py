@@ -13,6 +13,8 @@ import pickle
 
 import DictionarySaver as ds
 import DataHandler as dh
+import Spectrum
+from time import sleep
 
 import matplotlib
 matplotlib.use("TkAgg", warn=False)
@@ -82,8 +84,14 @@ class Application(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
-    
-       
+
+#Button Prefab Class
+class Buttons(ttk.Button):
+    def __init__(self, container, name, command, position):
+        button = ttk.Button(container, text = name, command = command)
+        button.grid(row = position[0], column = position[1], padx = 5, pady  = 5, sticky = tk.N+tk.S+tk.E+tk.W)
+        
+        
 #First page when you open the app
 class StartPage(tk.Frame):
     
@@ -104,17 +112,10 @@ class StartPage(tk.Frame):
         button1 = ttk.Button(f, text="Load",
                            command = lambda: self.load())
         button1.grid(row = 1, column = 0)
-        
-#        button2 = ttk.Button(f, text="SRP Analysis",
-#                             command = lambda: controller.show_frame(GraphPage))
-#        button2.grid(row = 1, column = 1)
-        
+
         button3 = ttk.Button(f, text = "Clear All",
                              command = lambda:  self.clear())
         button3.grid(row = 1, column = 2, padx = 10, pady = 10)
-        
-#        w = win.winfo_screenwidth()
-#        h = win.winfo_screenheight()
         
     #loads data into controller and poplates listbox with filenames
     def load(self):
@@ -152,10 +153,6 @@ class GraphPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         
-#        w=root.winfo_screenwidth()
-#        h=root.winfo_screenheight()
-#        root.geometry("400x300+%d+%d" % ( (w-400)/2, (h-300)/2 ) )
- 
         center_anchor = tk.Frame(self)
         center_anchor.pack(anchor = 'center')
         
@@ -203,51 +200,24 @@ class GraphPage(tk.Frame):
         sessionLabel= tk.Label(f3, text = "Sessions", font = LARGE_FONT)
         sessionLabel.pack(side = tk.TOP)
         
+        #Toolbar Buttons
+        self.process_button = Buttons(f1, "Process Loaded Data", lambda: self.process(), (1, 0))
+                                      
+        self.graph_all_button = Buttons(f1, "Graph All", lambda : self.graph_all(), (1, 1))
         
-#        label = tk.Label(f1, text="Graph Page", font = LARGE_FONT)
-#        label.grid(row = 0, column = 0, columnspan = 5)
-        
-        #buttons
-#        button1 = ttk.Button(f1, text = "Back to Home",
-#                            command = lambda: controller.show_frame(StartPage))
-#        button1.grid(row = 1, column = 0)
-        
-        button4 = ttk.Button(f1, text = "Process Loaded Data",
-                             command = lambda: self.process())
-                             
-        button4.grid(row = 1, column = 1)
-        
-        button2 = ttk.Button(f1, text = "Graph All",
-                             command = lambda: self.graph_all())
-        button2.grid(row = 1, column = 2)
-        
-        button3 = ttk.Button(f1, text = "Graph Selected",
-                             command = lambda: self.graph_selected())
-        button3.grid(row = 1, column = 3)
-        
-        button5 = ttk.Button(f1, text = "View Raws",
-                            command = lambda: self.view_raws())
-                            
-        button5.grid(row = 1, column = 4)
-        
-        button6 = ttk.Button(f1, text = "Grand Average",
-                             command = lambda: self.graph_total())
-                             
-        button6.grid(row = 1, column = 5)
-        
+        self.graph_selected_button = Buttons(f1, "Graph Selected", lambda: self.graph_selected(), (1, 2))
 
-        button7 = ttk.Button(f1, text = "Save All",
-                             command = lambda: self.save('all'))         
-                             
-        button7.grid(row = 1, column = 6)
+        self.view_raws_button = Buttons(f1, "View Raws", lambda: self.view_raws(), (1, 3))
+
+        self.grand_average_button = Buttons(f1, "Grand Average", lambda: self.graph_total(), (1, 4))
+
+        self.save_all_button = Buttons(f1, "Save All", lambda: self.save('all'), (1, 5))
+
+        self.save_selected_button = Buttons(f1, "Save Selected", lambda: self.save('selected'), (1, 6))
+
+        self.load_data_button = Buttons(f1, "Load Saved Data", lambda: self.load_data(), (1, 7))
         
-        button8 = ttk.Button(f1, text = 'Save Selected',
-                             command = lambda: self.save('selected'))
-        button8.grid(row = 1, column = 7)
-        
-        button9 = ttk.Button(f1, text = 'Load Data',
-                             command = lambda: self.load_data())
-        button9.grid(row = 1, column = 8)
+        self.spectrum_button = Buttons(f1, "Show Spectrum", lambda: self.show_spectrum(), (1,8))
         
         stimlabel = tk.Label(f1, text="Stim Length")
         stimlabel.grid(row = 2, column = 0, padx = 10, pady = 10)
@@ -270,7 +240,10 @@ class GraphPage(tk.Frame):
         self.prestim_entry.grid(row = 2, column = 5, padx = 10, pady = 10)
         self.prestim_entry.insert(0, 0)
         
-
+        self.graphBehavior_string = tk.StringVar()
+        self.graphBehavior_label = tk.Label(f1, textvariable = self.graphBehavior_string)
+        self.graphBehavior_label.grid(row = 2, column = 6)
+        
         self.slider_max = 500
 
         #sliding scales for window selection
@@ -283,27 +256,6 @@ class GraphPage(tk.Frame):
                                    command = self.on_slider_move)
         self.max_slider.grid(row = 3, column = 3, padx = 10, pady = 10)
         self.max_slider.set(250)
-        
-#        minLabel = tk.Label(f1, text = "Min: ")
-#        minLabel.grid(row = 4, column = 0)
-#        
-#        self.minVar = tk.StringVar()
-#        minDisplay = tk.Label(f1, textvariable = self.minVar)
-#        minDisplay.grid(row = 4, column = 1)
-#        
-#        maxLabel = tk.Label(f1, text = "Max: ")
-#        maxLabel.grid(row = 4, column = 2)
-#
-#        self.maxVar = tk.StringVar()        
-#        maxDisplay = tk.Label(f1, textvariable = self.maxVar)
-#        maxDisplay.grid(row = 4, column = 3)
-#        
-#        ampLabel = tk.Label(f1, text = "Amplitude: ")
-#        ampLabel.grid(row = 4, column = 4)
-#
-#        self.ampVar = tk.StringVar()        
-#        ampDisplay = tk.Label(f1, textvariable = self.ampVar)
-#        ampDisplay.grid(row = 4, column = 5)
         
         
         self.graphBehavior = 'total'
@@ -381,6 +333,7 @@ class GraphPage(tk.Frame):
     def graph_all(self):
         a.clear()
         self.graphBehavior = 'all'
+        self.update_labels()
         for fn in Data.fileData:
             if self.stimTypeVar.get() == 1:
                 for i in Data.stim_avgs[fn]:
@@ -417,6 +370,7 @@ class GraphPage(tk.Frame):
         a.clear()
         
         self.graphBehavior = 'total'
+        self.update_labels()
         
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
@@ -480,6 +434,7 @@ class GraphPage(tk.Frame):
     def on_file_select(self, evt):
         self.listSelect = True
         a.clear()
+        self.update_labels()
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
         
@@ -547,6 +502,7 @@ class GraphPage(tk.Frame):
     def graph_selected(self):
         a.clear()
         self.graphBehavior = 'selected'
+        self.update_labels()
         selection = self.selectedBlocks.curselection()
         
         stimTypeVar = self.stimTypeVar.get()
@@ -578,6 +534,7 @@ class GraphPage(tk.Frame):
     def graph_on_select(self, evt):
         #self.processedList.selection_clear(0,tk.END)
         self.graphBehavior = 'selected'
+        self.update_labels()
         self.lock_selected.set(3)
         
         selection = self.selectedBlocks.curselection()
@@ -690,10 +647,57 @@ class GraphPage(tk.Frame):
                                     self.selectedBlocks.insert(tk.END, orientations[c][0] + " " + str(i+1) + "  " + b)
                     
 #                        
-                        
-                    
+    
+    def show_spectrum(self):
+        if self.graphBehavior == 'selected' or self.graphBehavior == 'all':
+            selection = self.selectedBlocks.curselection()
+            
+            stimTypeVar = self.stimTypeVar.get()
+            if stimTypeVar == 1:
+                lookupIndex = 1
+            elif stimTypeVar == 2 or stimTypeVar == 3:
+                lookupIndex = 0
                 
-        
+            for item in selection:
+                block, key = self.selectedBlocks.get(item).split("  ")
+                orientation, block = block.split(" ")
+                block = int(block) - 1
+                if stimTypeVar != 3:
+                    stim_type = orientation_lookup[orientation][lookupIndex]
+                    Spectrum.getSpectrum(Data.stim_avgs[key][stim_type][block])
+                elif stimTypeVar == 3:
+                    stim_type = orientation_lookup[orientation][lookupIndex]
+                    Spectrum.getSpectrum(Data.orient_avgs[key][stim_type][block])
+                    
+        elif self.graphBehavior == 'total':  
+            selection = self.processedList.curselection()
+            selection = [self.processedList.get(item) for item in selection]
+            if (len(selection) == 0):
+                self.processedList.selection_set(0,tk.END)
+                selection = self.processedList.curselection()
+                selection = [self.processedList.get(item) for item in selection]
+
+            novel = self.novelVar.get()
+            familiar = self.familiarVar.get()
+                
+            for key in Data.grand_avgs:
+                if key in selection:
+                    if self.stimTypeVar.get() == 3:
+                        if familiar == 1:
+                            Spectrum.getSpectrum(Data.grand_avgs[key][1][0])
+                        if novel == 1 and len(Data.grand_avgs[key])>1:
+                            Spectrum.getSpectrum(Data.grand_avgs[key][3][0])
+                    elif self.stimTypeVar.get() == 1:
+                        if familiar == 1:
+                            Spectrum.getSpectrum(Data.total_avgs[key][2][0]) 
+                        if novel == 1 and len(Data.grand_avgs[key])>1:
+                            Spectrum.getSpectrum(Data.total_avgs[key][4][0])                           
+                    elif self.stimTypeVar.get() == 2:
+                        if familiar == 1:
+                            Spectrum.getSpectrum(Data.total_avgs[key][1][0])
+                        if novel == 1 and len(Data.grand_avgs[key])>1:
+                            Spectrum.getSpectrum(Data.total_avgs[key][3][0])
+
 
     def on_stim_select(self):
         self.re_graph()
@@ -955,7 +959,11 @@ class GraphPage(tk.Frame):
             Data.graph_raw(Data.filenames.keys()[0])
         except IndexError:
             print "graphing error: missing data"
-            
+    
+    def update_labels(self):
+        #self.graphBehavior_string.set("graphing " + self.graphBehavior)
+        pass
+
         
 app = Application()
 ani = animation.FuncAnimation(f, animate, interval = 1000)
