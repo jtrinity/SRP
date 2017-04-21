@@ -18,7 +18,6 @@ from time import sleep
 
 import matplotlib
 matplotlib.use("TkAgg", warn=False)
-import matplotlib.pyplot as plt
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
@@ -650,12 +649,6 @@ class GraphPage(tk.Frame):
 #                        
     
     def show_spectrum(self):
-        
-        fig = plt.figure(1)
-        fig.clear()
-        plt.xlabel('Freq (Hz)')
-        plt.ylabel('|Y(freq)|')
-        
         if self.graphBehavior == 'selected' or self.graphBehavior == 'all':
             selection = self.selectedBlocks.curselection()
             
@@ -671,12 +664,10 @@ class GraphPage(tk.Frame):
                 block = int(block) - 1
                 if stimTypeVar != 3:
                     stim_type = orientation_lookup[orientation][lookupIndex]
-                    freq, Y = Spectrum.getSpectrum(Data.stim_avgs[key][stim_type][block])
-                    plt.plot(freq,abs(Y), label = orientation + " " + str(block + 1) + " " + key)
+                    Spectrum.getSpectrum(Data.stim_avgs[key][stim_type][block])
                 elif stimTypeVar == 3:
                     stim_type = orientation_lookup[orientation][lookupIndex]
-                    freq, Y = Spectrum.getSpectrum(Data.orient_avgs[key][stim_type][block])
-                    plt.plot(freq,abs(Y), label = orientation + " " + str(block + 1) + " " + key)
+                    Spectrum.getSpectrum(Data.orient_avgs[key][stim_type][block])
                     
         elif self.graphBehavior == 'total':  
             selection = self.processedList.curselection()
@@ -693,28 +684,19 @@ class GraphPage(tk.Frame):
                 if key in selection:
                     if self.stimTypeVar.get() == 3:
                         if familiar == 1:
-                            freq, Y = Spectrum.getSpectrum(Data.grand_avgs[key][1][0])
-                            plt.plot(freq,abs(Y), label = orientations[1][0] + " " + key)
+                            Spectrum.getSpectrum(Data.grand_avgs[key][1][0])
                         if novel == 1 and len(Data.grand_avgs[key])>1:
-                            freq, Y = Spectrum.getSpectrum(Data.grand_avgs[key][3][0])
-                            plt.plot(freq,abs(Y), label = orientations[3][0] + " " + key)
+                            Spectrum.getSpectrum(Data.grand_avgs[key][3][0])
                     elif self.stimTypeVar.get() == 1:
                         if familiar == 1:
-                            freq, Y = Spectrum.getSpectrum(Data.total_avgs[key][2][0])
-                            plt.plot(freq,abs(Y), label = orientations[2][0] + " " + key)
+                            Spectrum.getSpectrum(Data.total_avgs[key][2][0]) 
                         if novel == 1 and len(Data.grand_avgs[key])>1:
-                            freq, Y = Spectrum.getSpectrum(Data.total_avgs[key][4][0])
-                            plt.plot(freq,abs(Y), label = orientations[4][0] + " " + key)
+                            Spectrum.getSpectrum(Data.total_avgs[key][4][0])                           
                     elif self.stimTypeVar.get() == 2:
                         if familiar == 1:
-                            freq, Y = Spectrum.getSpectrum(Data.total_avgs[key][1][0])
-                            plt.plot(freq,abs(Y), label = orientations[1][0] + " " + key)
+                            Spectrum.getSpectrum(Data.total_avgs[key][1][0])
                         if novel == 1 and len(Data.grand_avgs[key])>1:
-                            freq, Y = Spectrum.getSpectrum(Data.total_avgs[key][3][0])
-                            plt.plot(freq,abs(Y), label = orientations[3][0] + " " + key)
-        plt.legend(fontsize = 6,loc='best')
-        plt.xlim((0,200))
-        
+                            Spectrum.getSpectrum(Data.total_avgs[key][3][0])
 
 
     def on_stim_select(self):

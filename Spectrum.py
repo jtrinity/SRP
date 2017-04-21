@@ -1,4 +1,4 @@
-
+from matplotlib import pylab as plt
 import numpy as np
 
 
@@ -15,5 +15,7 @@ def getSpectrum(signal):
  Y = np.fft.fft(signal)/length # fft computing and normalization
  Y = Y[range(length/2)]
  
- return frequency, Y
- 
+ fig = plt.figure()
+ plt.plot(frequency,abs(Y),'r') # plotting the spectrum
+ plt.xlabel('Freq (Hz)')
+ plt.ylabel('|Y(freq)|')
