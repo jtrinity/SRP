@@ -21,6 +21,7 @@ Created on Fri May 20 14:49:17 2016
 import ChannelPlot
 import numpy as np
 import matplotlib.pyplot as plt
+import Spectrum as sp
 
 class SRPdecoder:
     def __init__(self, *args, **kwargs):
@@ -129,6 +130,7 @@ if __name__ == "__main__":
     
     stims = SRP.GetStimLists(signalChannel, stimsPerSession, avgLength, stimTimeStamps)
     avgs = [SRP.GetAverages(stims[code], stimsPerSession) for code in stims]
+    spectra_avgs = [sp.getSpectrumAvg(stims[code], stimsPerSession) for code in stims]
     
     plt.figure(4)
     plt.plot(avgs[0][0])

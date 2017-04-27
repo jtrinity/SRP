@@ -17,3 +17,18 @@ def getSpectrum(signal):
  
  return frequency, Y
  
+def getSpectrumAvg(signal_list, numStims):
+    avgs = []
+    for i in range(0, len(signal_list), numStims):
+        avg = np.zeros(len(signal_list[0])/2)
+        avg = avg.astype(np.complex128)
+        
+        for j in range(numStims):
+            freq, Y = getSpectrum(signal_list[i+j])
+            avg += np.array(Y)
+        avg /= numStims
+        #avg += i*np.ones(len(signal_list[0]))
+        avgs.append((freq, avg))
+        
+    return avgs
+    

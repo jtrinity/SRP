@@ -11,7 +11,7 @@ import tkFileDialog
 import os
 import pickle
 
-import DictionarySaver as ds
+import DictionarySaver as dss
 import DataHandler as dh
 import Spectrum
 from time import sleep
@@ -240,6 +240,11 @@ class GraphPage(tk.Frame):
         self.prestim_entry = ttk.Entry(f1, text = "pre-stim window")
         self.prestim_entry.grid(row = 2, column = 5, padx = 10, pady = 10)
         self.prestim_entry.insert(0, 0)
+        
+        self.usePsychopyVar = tk.IntVar()
+        self.usePsychopy = tk.Checkbutton(f1, variable = self.usePsychopyVar, text = "use psychopy")
+        self.usePsychopy.grid(row = 2, column = 6, padx = 10, pady = 10)
+        self.usePsychopyVar.set(0)
         
         self.graphBehavior_string = tk.StringVar()
         self.graphBehavior_label = tk.Label(f1, textvariable = self.graphBehavior_string)
@@ -671,11 +676,13 @@ class GraphPage(tk.Frame):
                 block = int(block) - 1
                 if stimTypeVar != 3:
                     stim_type = orientation_lookup[orientation][lookupIndex]
-                    freq, Y = Spectrum.getSpectrum(Data.stim_avgs[key][stim_type][block])
+                    #freq, Y = Spectrum.getSpectrum(Data.stim_avgs[key][stim_type][block])
+                    freq, Y = Data.spectral_data[key][stim_type][block]
                     plt.plot(freq,abs(Y), label = orientation + " " + str(block + 1) + " " + key)
                 elif stimTypeVar == 3:
                     stim_type = orientation_lookup[orientation][lookupIndex]
-                    freq, Y = Spectrum.getSpectrum(Data.orient_avgs[key][stim_type][block])
+                    #freq, Y = Spectrum.getSpectrum(Data.orient_avgs[key][stim_type][block])
+                    freq, Y = Data.spectral_data[key][stim_type][block]
                     plt.plot(freq,abs(Y), label = orientation + " " + str(block + 1) + " " + key)
                     
         elif self.graphBehavior == 'total':  

@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import pickle
+import Spectrum as sp
 
 class DataHandler:
     def __init__(self):
@@ -29,7 +30,8 @@ class DataHandler:
         
         #data of interest
         self.timeCodes = dict()
-
+        
+        self.raw_stims = dict()
         self.avgAmplitudes = dict()
         self.stimTimeStamps = dict()
         self.stimLengths = dict()
@@ -41,6 +43,7 @@ class DataHandler:
         self.total_amplitudes = dict()
         self.grand_avgs = dict()
         self.grand_amps = dict()
+        self.spectral_data = dict()
     
     # (full path, number of encoding channels, length of stimulus window in ms, length of window to calculate stim baseline)
     def add_file(self, filename):
@@ -84,12 +87,14 @@ class DataHandler:
         
         stims = d.GetStimLists(signalChannel, stimsPerSession, avgLength, stimTimeStamps)
         stim_avgs = {code:d.GetAverages(stims[code], stimsPerSession) for code in stims}
+        spectral_avgs = {code:sp.getSpectrumAvg(stims[code], stimsPerSession) for code in stims}
         
         orient_avgs = dict()
         for key in stim_avgs:
             if int(key) % 2 != 0:
                 orient_avgs[key] = d.CombineAvgs(stim_avgs, key, key + 1)
         
+        self.raw_stims[filename] = stims
         self.stimTimeStamps[filename] = stimTimeStamps
         self.timeCodes[filename] = timeCodes
         self.stimLengths[filename] = stimLengths
@@ -97,6 +102,7 @@ class DataHandler:
         self.orient_avgs[filename] = orient_avgs
         self.total_avgs[filename] = self.get_grand_avgs(stim_avgs)
         self.grand_avgs[filename] = self.get_grand_avgs(orient_avgs)
+        self.spectral_data[filename] = spectral_avgs
         
     def get_grand_avgs(self, avg_list):
         total_avg = dict()
@@ -124,6 +130,8 @@ class DataHandler:
         self.total_amplitudes.clear()
         self.grand_avgs.clear()
         self.grand_amps.clear()
+        self.raw_stims.clear()
+        self.spectral_data.clear()
     
     #len(dh.stim_avgs['M_SRP11_45d_135d_d6_awake_132_data.bin'][1][0]) = 500
     #dict(filenames) dict(keycodes) list(stim averages)
@@ -204,8 +212,7 @@ class DataHandler:
             if detected.count(i + 1) > 150:
                 num_channels += 1
         return num_channels
-            
-
+    
        
 if __name__ == "__main__":
     
