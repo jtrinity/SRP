@@ -1,4 +1,4 @@
-
+from matplotlib import pylab as plt
 import numpy as np
 
 
@@ -15,6 +15,7 @@ def getSpectrum(signal):
  Y = np.fft.fft(signal)/length # fft computing and normalization
  Y = Y[range(length/2)]
  
+
  return frequency, Y
  
 def getSpectrumAvg(signal_list, numStims):
@@ -32,3 +33,4 @@ def getSpectrumAvg(signal_list, numStims):
         
     return avgs
     
+
