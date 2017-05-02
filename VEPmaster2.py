@@ -11,11 +11,12 @@ import tkFileDialog
 import os
 import pickle
 
-import DictionarySaver as dss
+import DictionarySaver as ds
 import DataHandler as dh
 import Spectrum
 from time import sleep
 
+import numpy as np
 import matplotlib
 matplotlib.use("TkAgg", warn=False)
 import matplotlib.pyplot as plt
@@ -219,6 +220,8 @@ class GraphPage(tk.Frame):
         self.load_data_button = Buttons(f1, "Load Saved Data", lambda: self.load_data(), (1, 7))
         
         self.spectrum_button = Buttons(f1, "Show Spectrum", lambda: self.show_spectrum(), (1,8))
+        
+        self.amplitude_button = Buttons(f1, "Show Amplitudes", lambda: self.graph_amplitude_progression(), (1,9))
         
         stimlabel = tk.Label(f1, text="Stim Length")
         stimlabel.grid(row = 2, column = 0, padx = 10, pady = 10)
@@ -527,7 +530,7 @@ class GraphPage(tk.Frame):
                 a.plot(Data.amplitudes[key][stim_type][block]["min_x"],Data.amplitudes[key][stim_type][block]["min_y"], 
                        marker = '+', color = 'red', markersize = 10, markeredgewidth = 2)
                 a.plot(Data.amplitudes[key][stim_type][block]["max_x"],Data.amplitudes[key][stim_type][block]["max_y"], 
-                       marker = '+', color = 'limegreen', markersize = 10, markeredgewidth = 2)  
+                       marker = '+', color = 'limegreen', markersize = 10, markeredgewidth = 2)
             elif stimTypeVar == 3:
                 stim_type = orientation_lookup[orientation][lookupIndex]
                 a.plot(Data.orient_avgs[key][stim_type][block], linewidth = self.linewidth)
@@ -535,8 +538,32 @@ class GraphPage(tk.Frame):
                        marker = '+', color = 'red', markersize = 10, markeredgewidth = 2)
                 a.plot(Data.orient_amplitudes[key][stim_type][block]["max_x"],Data.orient_amplitudes[key][stim_type][block]["max_y"], 
                        marker = '+', color = 'limegreen', markersize = 10, markeredgewidth = 2)  
-                
+    
+    def graph_amplitude_progression(self):
+        self.update_labels()
+        plt.figure(2)
+        plt.title("amplitudes")
+        
+#        color=iter(plt.cm.rainbow(np.linspace(0,1,len(selection)*2)))
+#        c=next(color)
+#        plt.plot(x,y,c=c)
+        
+        selection = self.processedList.curselection()
+        selection = [self.processedList.get(item) for item in selection]
 
+        for key in Data.orient_amplitudes:
+            if key in selection:
+                for stim_type in Data.orient_amplitudes[key]:
+                    x_series=list()
+                    y_series = list()
+                    for block in Data.orient_amplitudes[key][stim_type]:
+                        x_series.append(int(block)+1)
+                        y_series.append(Data.amplitudes[key][stim_type][block]["amplitude"])
+                    
+                    plt.plot(x_series, y_series, ls='None', marker = '+', markersize = 10, markeredgewidth = 2, label = orientations[stim_type][0]+" "+key)
+                    
+        plt.legend(fontsize = 6,loc='best')
+        
     def graph_on_select(self, evt):
         #self.processedList.selection_clear(0,tk.END)
         self.graphBehavior = 'selected'
