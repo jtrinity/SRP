@@ -11,7 +11,6 @@ import tkFileDialog
 import os
 import pickle
 
-import DictionarySaver as ds
 import DataHandler as dh
 import Spectrum
 from time import sleep
@@ -624,7 +623,7 @@ class GraphPage(tk.Frame):
             savedamps[truncated] = savedamps[fn]
             del savedamps[fn]
             
-        save = ds.DictionarySaver()
+        save = dh.DictionarySaver()
         try:
             save_loc = save.saveDictionary(savedamps, Data.amplitudes.keys()[0][:-4])
             print save_loc

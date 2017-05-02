@@ -2,7 +2,7 @@
 """
 Created on Fri Jun 10 17:19:44 2016
 
-@author: Jesse
+@author: Jesse Trinity, Isaiah Nields
 """
 import ChannelPlot as cp
 import SRPdecoder2 as SRP
@@ -11,6 +11,10 @@ import os
 import numpy as np
 import pickle
 import Spectrum as sp
+
+import scipy.io as sio
+import tkFileDialog
+from os import path
 
 class DataHandler:
     def __init__(self):
@@ -31,6 +35,7 @@ class DataHandler:
         #data of interest
         self.timeCodes = dict()
         
+        #amplitude[filename][type(orient+reversal)][block#][properties]
         self.raw_stims = dict()
         self.avgAmplitudes = dict()
         self.stimTimeStamps = dict()
@@ -103,6 +108,7 @@ class DataHandler:
         self.total_avgs[filename] = self.get_grand_avgs(stim_avgs)
         self.grand_avgs[filename] = self.get_grand_avgs(orient_avgs)
         self.spectral_data[filename] = spectral_avgs
+        
         
     def get_grand_avgs(self, avg_list):
         total_avg = dict()
@@ -213,6 +219,26 @@ class DataHandler:
                 num_channels += 1
         return num_channels
     
+class DictionarySaver():
+    def __init__(self):
+
+        self.file_opt = options = {}             
+        options['defaultextension'] = '.mat'        
+        options['filetypes'] = [('Matlab file', ".mat"),("Python file", ".p")]
+
+    def saveDictionary(self, dictionary,fn):
+        
+        self.file_opt['initialfile'] = fn
+        save_loc = tkFileDialog.asksaveasfilename(**self.file_opt)
+        
+        extension = path.splitext(save_loc)[1]
+        if extension == ".mat":
+            sio.savemat(save_loc, dictionary)
+            print "data saved to: " + save_loc
+            return save_loc
+        elif extension == ".p":
+            return save_loc
+    
        
 if __name__ == "__main__":
     
@@ -222,6 +248,7 @@ if __name__ == "__main__":
     dh.add_file(filename)
     dh.process_file(fn, 4, dh.stimLength, dh.baseline, dh.prestim_baseline)
     dh.get_amplitudes(dh.stim_avgs, dh.amplitudes, 25, 250)
+    dh.get_amplitudes(dh.orient_avgs, dh.orient_amplitudes, 25, 250)
     dh.graph_raw(fn)
     
     print dh.detect_channels(fn)
